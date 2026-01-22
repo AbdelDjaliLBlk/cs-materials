@@ -1,0 +1,1 @@
+print("TP1 AN02 - Exercice 1")
