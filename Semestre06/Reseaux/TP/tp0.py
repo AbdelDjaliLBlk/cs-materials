@@ -30,4 +30,5 @@ def exo_init():
     os.system ("shutdown /s") # Eteindre PC
 
 if __name__ == "__main__":    
+    exo_init()
     
