@@ -1,14 +1,7 @@
 import sympy as sp
 from colorama import Fore,Style 
 
-# Declare Symbol X and The Points of f(x)
 x = sp.Symbol('x')
-points = [
-    (100,10),
-    (121,11),
-    (144,12)
-    ]
-
 # Lagrange
 def polynome_lagrange(points):
     n = len(points) 
@@ -32,8 +25,3 @@ def toString(P,values = None):
 def polynome_newton(points):    
     pol = 0
     return pol
-
-# Main
-if __name__ == "__main__":
-    P = polynome_lagrange(points)
-    toString(P,[115,16])
