@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+    <title>Exo5</title>
+    </head>
+<html>
+    <body>
+        <!--EXO 5-->
+    <header><h1>Mon Blog</h1></header>
+    <fieldset>
+        <legend>Vos données personnelles</legend>
+        <label>Nom: </label>
+        <input name="nom" required placeholder="Votre Nom">
+        <label>Prénom: </label>
+        <input name="prenom" required placeholder="Votre Prenom"><br><br>
+        <label>Date de Naissance: </label>
+        <input type = "date" name="date" required><br><br>
+        <label>Lieu de Naissance: </label>
+        <input type = "radio" name="lieu" value = "Tlemcen" >
+        <label>Tlemcen</label>
+        <input type = "radio" name="lieu" value = "Rest">
+        <label>Reste Du Monde</label>    
+    </fieldset>
+    <fieldset>
+        <legend>Adresse</legend>
+        <label>Adresse Postale: </label>
+        <input name="adresse_postale" required placeholder="Votre Adresse">
+        <label>Code Postale: </label>
+        <input name="adresse_postale" required placeholder="13000">
+        <fieldset>
+    <legend>Informations supplémentaires</legend>
+    <label>Adresse électronique :</label>
+    <input type="email" name="elect" placeholder="Votre adresse éléctronique"><br><br>
+    <label>Page personnelle:   </label>
+    <input type="url" name="website" placeholder="Votre page web"><br><br>
+    <label>Téléphone portable</label>
+    <input type="tel" name="telephone" placeholder="0664481954" pattern="0[5-7]{1}[0-9]{8}"><br><br>
+    <label>Semester</label>
+    <select name="semester">
+        <option value="1">S1</option>
+        <option value="2">S2</option>
+        <option value="3">S3</option>
+        <option value="4">S4</option>
+        <option value="5">S5</option>
+        <option value="6">S6</option>
+    </select><br><br>
+    <label>Niveau en HTML</label>
+    <input type="range" name="niveau" min="0" max="100">
+</fieldset>
+<fieldset>
+    <legend>Commentaires</legend>
+    <input type="checkbox" name="lang" value="HTML">HTML
+    <input type="checkbox" name="lang" value="CSS">CSS
+    <input type="checkbox" name="lang" value="JS">JS
+</fieldset><br>
+<input type="submit" value="Envoyer">
+<input type="reset" value="Réinitialiser"><br><br><br>
+<table border="1" style="width:50%; height: 40px; border-collapse: collapse;">
+    <tbody>
+        <tr>
+            <td>Genre</td>
+            <td><input type="radio" name="sex">Homme <input type="radio" name="sexe">Femme</td>
+        </tr>
+        <tr>
+            <td>Nom</td>
+            <td><input type="text" name="nom"></td>
+        </tr>
+        <tr>
+            <td>Prenom</td>
+            <td><input type="text" name="prenom" ></td>
+        </tr>
+        <tr>
+            <td>Email</td>
+            <td><input type="email" name="email" ></td>
+        </tr>
+        <tr>
+            <td>Nom d'utilisateur</td>
+            <td><input type="text" name="nom" ></td>
+        </tr>
+        <tr>
+            <td>Mot de passe</td>
+            <td><input type="password" name="password" ></td>
+        </tr>
+        <tr>
+            <td>Message</td>
+            <td><textarea name="message"></textarea></td>
+        </tr>
+        <tr>
+            <td>Site web</td>
+            <td><input type="url" name="site"></td>
+        </tr>
+        <tr>
+            <td>Date de naissance</td>
+            <td><input type="date" name="date"></td>
+        </tr>
+        <tr>
+            <td>Mois de debut de contrat</td>
+            <td><input type="month" name="mois"></td>
+        </tr>
+        <tr>
+            <td>Heure de réunion</td>
+            <td><input type="time" name="heure"></td>
+        </tr>
+        <tr>
+            <td>Couleur préférée</td>
+            <td><input type="color" name="color" value="#ff0000"></td>
+        </tr>
+        <tr>
+            <td>Centres d'intérêt</td>
+            <td><input type="checkbox" name="interest" value="sport">Sport<br> <input type="checkbox" name="interest" value="musique">Musique</td>
+        </tr>
+        <tr>
+            <td>Pays</td>
+            <td><select name="country">
+                    <option value="France">France</option>
+                    <option value="Allemagne">Allemagne</option>
+                    <option value="Espagne">Espagne</option>
+                </select></td>
+        </tr>
+        <tr>
+            <td>Fichier</td>
+            <td><input type="file" name="fichier"></td>
+        </tr>
+        <tr>
+            <td>Actions</td>
+            <td><input type="submit" value="Envoyer"><input type="reset" value="Réinitialiser"></td>
+        </tr>
+    </tbody>
+</table>
+    </fieldset>
+    </body>
+</html>
