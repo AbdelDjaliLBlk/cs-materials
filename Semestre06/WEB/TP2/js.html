@@ -1,0 +1,27 @@
+<html>  
+  <head> 
+    <title>JavaScript</title>  
+  </head> 
+  <body> 
+<script> 
+ function somme1(a,b) {return a+b;} 
+  let somme2 = (a,b) => a+b; 
+  let f1 = (function return42() {return 42;}) (); 
+  let f2 = (function () {return 300;}) (); 
+  let f3 = ((x) => 30 * x) (30); 
+  let f4 = ((x) => 30 * x);  
+  let f5 = () => "Bonjour"; 
+  let f6 = (() => "Informatique")(); 
+  console.log(somme1(10,20)); 
+  console.log(typeof somme2); 
+  console.log(somme2); 
+  console.log(somme2(10,20)); 
+  console.log(f1);  
+  console.log(f2);  
+  console.log(f3);  
+  console.log(f4(100));  
+  console.log(f5());  
+  console.log(f6);  
+ </script> 
+</body> 
+</html>

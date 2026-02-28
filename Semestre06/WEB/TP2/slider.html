@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slider de Baskets</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f5f5f5;
+        }
+
+        .slider-container {
+            width: 300px;
+            margin: 50px auto;
+            overflow: hidden;
+        }
+
+        .slides {
+            display: flex;
+            transition: transform 0.5s ease-in-out;
+        }
+
+        .slide {
+            min-width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+        }
+
+        /* Animation de saut infinie */
+        .slide img {
+            width: 200px;
+            height: auto;
+            animation: jump 0.4s ease-in-out infinite alternate;
+        }
+
+        @keyframes jump {
+            0% { transform: translateY(0); } /*Point de Départ */
+            100% { transform: translateY(-20px); } /*Point d'Arret */
+        }
+        
+        /* Numéros de sélection */
+        .buttons {
+            margin-top: 20px;
+        }
+
+        .btn {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            line-height: 40px;
+            margin: 5px;
+            background-color: #007BFF;
+            color: white;
+            font-size: 18px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Choisis ta Basket !</h2>
+
+    <div class="slider-container">
+        <div class="slides">
+            <div class="slide"><img src="basket1.jpeg" alt="Basket 1"></div>
+            <div class="slide"><img src="basket2.jpeg" alt="Basket 2"></div>
+            <div class="slide"><img src="basket3.jpeg" alt="Basket 3"></div>
+            <div class="slide"><img src="basket4.jpeg" alt="Basket 4"></div>
+        </div>
+    </div>
+
+    <div class="buttons">
+        <span class="btn" onclick="changeSlide(0)">1</span>
+        <span class="btn" onclick="changeSlide(1)">2</span>
+        <span class="btn" onclick="changeSlide(2)">3</span>
+        <span class="btn" onclick="changeSlide(3)">4</span>
+    </div>
+
+    <script>
+        function changeSlide(index) {
+            const slides = document.querySelector(".slides");
+            slides.style.transform = `translateX(${-index * 300}px)`;
+        }
+        
+    </script>
+
+</body>
+</html>
+
+
+<!-- 
+            Réponses :  
+1- 100% .slide = toute la largeur du container.
+2- ChangeSlide = Modifie la position horizontale du slider 
+        en multipliant index * 300
+3- * 300px = width du container. 
+   * 300px de ChangeSlide =  Correspond a la largeur du container et qui permet de
+    changer de slide en laissant l'image centré et en place
+   * 100% .slide = Total width du container.
+        -->

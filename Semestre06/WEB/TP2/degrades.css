@@ -1,0 +1,51 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    text-align: center;
+}
+
+.container {
+    width : 80%;
+    margin: 40px auto;
+}
+
+.box{
+    height: 80px;
+    color: white;
+    font-weight: bold;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.degrade1 {
+    background: linear-gradient(to right, #3498db, #8e44ad);
+}
+.degrade2 {
+    background: linear-gradient(to left, #e74c3c, #f39c12);
+}
+.degrade3 {
+    background: linear-gradient(to bottom, #2ecc71, #f1c40f);
+}
+.degrade4 {
+    background: linear-gradient(to bottom, #2abea6, #800375);
+}
+.degrade5 {
+    background: linear-gradient(to bottom, #3b423e, #ffcc00);
+}
+@media screen and (max-width: 479px) {
+    .container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .box {
+        flex : 1;
+        writing-mode: vertical-rl;
+        margin: 5px;
+        text-orientation: mixed;
+        height: 100px;
+    }
+}

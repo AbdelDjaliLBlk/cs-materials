@@ -1,7 +1,17 @@
+import math
 import sympy as sp
-from colorama import Fore,Style 
-
-# Declaring The Symbol X and The Points of f(x)
 x = sp.Symbol('x')
-f = 1/1-x
-print(f.subs(x,1))
+
+# f(x) , g(x)
+f = x**3 + 4*x**2 - 10
+g = 10 /(x**2+4*x)
+
+def f_x(y):
+    return f.subs(x,y) 
+def df_x(y):
+    return sp.diff(f,x).subs(x,y)
+def g_x(y):    
+    return g.subs(x,y)
+
+
+print(g_x(4))

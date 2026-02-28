@@ -1,22 +1,31 @@
+from Bissection import *
+from PointFixe import *
+from Newton import *
 def menu():
-    print("+-----Menu Principal:------+")
-    print("| 1-Lire Systeme (A|b)     |\n| 2-Afficher Systeme (A|b) |\n| 0- Quitter.              |")  
-    print("+--------------------------+")
-def submenu():
-    print("1-Itérative.\n2-Récursive.\n0-Retour.")
+    print("+======Menu:======+")
+    print("|  1-Dichotomie   |\n|  2-Point Fixe   |\n|  3-Newton       |\n|  0-Quitter      |")  
+    print("+=================+")
 
+# ------------------------------------------------
+# Fonction f(x) Doit Etre Changé dans 'Fonction.py'
+# ------------------------------------------------
+
+# Initialisation 
+a,b = 1,2
+eps = 1e-3
+x0 = 1.5
 
 if __name__ == "__main__":
     while True:
         menu()
         option = int(input("Entrez une option:"))
         if option == 1:
-            print()
+            racine_dichotomie(a,b,eps)
         elif option ==2:
-            print()
+            racine_point_fixe(a,b,x0,eps)
         elif option == 3:
-            print()
+            racine_newton(a,b,x0,eps)
         else:
-            print("+-----------------+")
+            print("+=================+")
             print("| Session Terminé |")
-            print("+-----------------+")
+            print("+=================+")

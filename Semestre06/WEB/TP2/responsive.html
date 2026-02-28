@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Animation Responsive</title>
+  <style>
+    /* Styles par défaut pour les écrans larges (ordinateurs) */
+    .box {
+      width: 100px;
+      height: 100px;
+      background-color: red;
+      transition: background-color 0.5s ease;
+      animation: moveHorizontal 2s infinite alternate;
+    }
+
+    .box:hover {
+      background-color: blue;
+    }
+
+    @keyframes moveHorizontal {
+      from {
+        transform: translateX(0);
+      }
+      to {
+        transform: translateX(400px);
+      }
+    }
+
+    /* Styles pour les appareils mobiles */
+    @media screen and (max-width: 479px) {
+      .box {
+        background-color: yellow;
+        animation: moveVertical 2s infinite alternate;
+      }
+
+      .box:hover {
+        background-color: green;
+      }
+
+      @keyframes moveVertical {
+        from {
+          transform: translateY(0);
+        }
+        to {
+          transform: translateY(400px);
+        }
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="box"></div>
+</body>
+</html>
+<!--
+      Réponses : 
+1-  Permet d'adapter la largeur à l'écran du mobile.
+    width=device-width : largeur = largeur écran
+    initial-scale=1.0 : zoom initial
+    
+2- transition : trasition fluide entre deux elemetns
+   Background-color : Propriéte qui va changer avec la transition
+   0,5 : Temps de transition
+   ease : lent - rapide -lent
+
+3 - animation: moveHorizontal 2s infinite alternate;
+    moveHorizontal : nom de l’animation.
+    2s : durée d’un cycle.
+    infinite : répétition infinie.
+    alternate : va et vient.
+
+4- Définit les étapes de l’animation.
+   from : position de départ (translateX(0)).
+   to : position finale (translateX(400px)).
+   transform: translateX() déplace horizontalement l’élément.
+
+
+5- Applique le CSS seulement si la largeur de l’écran est ≤ 479px.
+   Permet d’adapter le style aux mobiles.
+   Change la couleur, l’animation et la direction du mouvement.
+
+-->
