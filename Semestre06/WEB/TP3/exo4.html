@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Exercice 4</title>
+</head>
+<body>
+  <h2>Manipulation d'objets et JSON</h2>
+  <p>Ouvrez la console du navigateur (F12) pour voir le résultat JSON.</p>
+
+  <script>
+    class Personne {
+      constructor(nom, age) {
+        this.nom = nom;
+        this.age = age;
+      }
+
+      saluer() {
+        alert(`Bonjour, je m'appelle ${this.nom} et j'ai ${this.age} ans.`);
+      }
+    }
+
+    var personnes = [
+      new Personne("Ali", 30),
+      new Personne("Sara", 25),
+      new Personne("Karim", 35)
+    ];
+
+    personnes.forEach(function (p) {
+      p.saluer();
+    });
+
+    var json = JSON.stringify(personnes);
+    console.log("JSON stringify :", json);
+
+    var parsed = JSON.parse(json);
+    var reconstruits = parsed.map(function (obj) {
+      return new Personne(obj.nom, obj.age);
+    });
+
+    reconstruits.forEach(function (p) {
+      p.saluer();
+    });
+  </script>
+</body>
+</html>

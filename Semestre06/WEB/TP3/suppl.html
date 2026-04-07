@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Exercice Supplémentaire</title>
+
+<style>
+body{
+    font-family: Arial;
+    text-align: center;
+}
+
+input{
+    padding:5px;
+    margin:5px;
+}
+
+table{
+    margin:auto;
+    border-collapse: collapse;
+}
+
+td{
+    border:1px solid black;
+}
+
+td input{
+    width:60px;
+    height:40px;
+    text-align:center;
+    font-size:18px;
+    border:none;
+}
+
+.result{
+    width:60px;
+    height:40px;
+    text-align:center;
+    font-size:18px;
+    font-weight:bold;
+}
+</style>
+
+</head>
+<body>
+
+Lines : <input type="number" id="lignes" value="3">
+Columns : <input type="number" id="colonnes" value="3">
+
+<br>
+
+Value to keep once :
+<input type="number" id="valeur">
+
+<br>
+
+<button onclick="generer()">Generate</button>
+<button onclick="calculer()">Delete duplicates</button>
+
+<br><br>
+
+<div id="InputMatrix"></div>
+
+<br>
+
+<div id="newMatrix"></div>
+
+<script>
+
+function generer(){
+
+let l=document.getElementById("lignes").value;
+let c=document.getElementById("colonnes").value;
+
+let html="<table>";
+
+for(let i=0;i<l;i++){
+html+="<tr>";
+
+for(let j=0;j<c;j++){
+html+="<td><input type='number' id='c_"+i+"_"+j+"'></td>";
+}
+
+html+="</tr>";
+}
+
+html+="</table>";
+
+document.getElementById("InputMatrix").innerHTML=html;
+document.getElementById("newMatrix").innerHTML="";
+}
+
+function calculer(){
+
+let l=document.getElementById("lignes").value;
+let c=document.getElementById("colonnes").value;
+let valeur=Number(document.getElementById("valeur").value);
+
+let trouve=false;
+let matrice=[];
+
+for(let i=0;i<l;i++){
+
+let ligne=[];
+
+for(let j=0;j<c;j++){
+
+let v=Number(document.getElementById("c_"+i+"_"+j).value);
+
+if(v===valeur){
+    if(trouve){
+        v=0;
+    }else{
+        trouve=true;
+    }
+}
+
+ligne.push(v);
+
+}
+
+matrice.push(ligne);
+}
+
+let html="<table>";
+
+for(let i=0;i<l;i++){
+
+html+="<tr>";
+
+for(let j=0;j<c;j++){
+
+html+="<td class='result'>"+matrice[i][j]+"</td>";
+
+}
+
+html+="</tr>";
+}
+
+html+="</table>";
+
+document.getElementById("newMatrix").innerHTML=html;
+
+}
+
+generer();
+
+</script>
+
+</body>
+</html>

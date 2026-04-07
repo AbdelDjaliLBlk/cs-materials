@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Exercice 3</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 30px; }
+  table { border-collapse: collapse; margin-top: 15px; margin-left: 27px; }
+  td, th { border: 1px solid #333; padding: 8px 15px; }
+  th { background-color: #ddd; }
+  button { padding: 6px 12px; cursor: pointer; }
+</style>
+</head>
+
+<body>
+
+<h2>Suppression d'une ligne</h2>
+
+<table id="monTableau">
+<tr><th>Valeurs</th></tr>
+<tr><td>12</td></tr>
+<tr><td>9</td></tr>
+<tr><td>67</td></tr>
+<tr><td>128</td></tr>
+</table>
+
+<br>
+<button onclick="supprimerLigne()">Supprimer une ligne</button>
+
+<script>
+function supprimerLigne() {
+
+  var valeur = prompt("Entrez la valeur à supprimer :");
+  if (valeur === null) return; // si l'utilisateur annule
+
+  valeur = valeur.trim();
+
+  var tableau = document.getElementById("monTableau");
+  var lignes = tableau.querySelectorAll("tr");
+  var trouve = false;
+
+  lignes.forEach(function(ligne){
+    var cellules = ligne.querySelectorAll("td");
+
+    cellules.forEach(function(cellule){
+      if(cellule.textContent.trim() === valeur){
+        tableau.deleteRow(ligne.rowIndex);
+        trouve = true;
+      }
+    });
+  });
+
+  if(!trouve){
+    alert("Aucune ligne ne contient la valeur :" + valeur );
+  }
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Exercice 2</title>
+  <style>
+    body {
+        font-family: Arial,
+        sans-serif; text-align: center;
+        margin-top: 50px; 
+    }
+    input { 
+        padding: 10px; 
+        width: 250px;
+        font-size: 16px;
+        margin-bottom: 10px; 
+    }
+    ul{ 
+        list-style: none;
+         padding: 0;
+         }
+    li {
+      padding: 8px; font-size: 18px; border: 1px solid #ccc;
+      margin: 5px; border-radius: 5px; background: #f9f9f9;
+    }
+    #MsgErr {
+        color: red; 
+        font-weight: bold;
+        margin-top: 10px; 
+    }
+  </style>
+</head>
+<body>
+  <h2>Rechercher une voiture</h2>
+  <input type="text" id="searchInput" placeholder="Tapez un modèle...">
+  <p id="MsgErr"></p>
+
+  <ul id="carList">
+    <li>Audi A3</li>
+    <li>Audi Q5</li>
+    <li>BMW X1</li>
+    <li>BMW X5</li>
+    <li>Citroën C3</li>
+    <li>Citroën C4</li>
+    <li>Dacia Duster</li>
+    <li>Ford Focus</li>
+    <li>Ford Mustang</li>
+    <li>Mercedes Classe A</li>
+    <li>Mercedes Classe C</li>
+    <li>Peugeot 208</li>
+    <li>Peugeot 3008</li>
+    <li>Renault Clio</li>
+    <li>Renault Mégane</li>
+    <li>Tesla Model 3</li>
+    <li>Tesla Model Y</li>
+    <li>Volkswagen Golf</li>
+    <li>Volkswagen Polo</li>
+  </ul>
+
+  <script>
+    function filterListByStartCharacter(inputId, listId) {
+      // Var contenant le modéle entré
+      var input = document.getElementById(inputId);
+      // Var contenant le liste des voitures
+      var list = document.getElementById(listId);
+      // Var contenant les voitures un par un
+      var items = list.querySelectorAll('li');
+      // Le message d'erreur
+      var MsgError = document.getElementById('MsgErr');
+
+      // Lors d"une entreé
+      input.addEventListener('input', function () {
+        var searchTerm = input.value.toLowerCase(); // Le modèle entreé
+        var found = false; // Initialiser par 'faux' l'élément n'est pas trouvé
+        // PArcourir toute la liste
+        items.forEach(function (item) {
+          var text = item.textContent.toLowerCase(); // Text de chaque 'li'
+          // Modèle Valide
+          if (text.startsWith(searchTerm) && searchTerm !== '') {
+            item.style.display = '';
+            item.style.backgroundColor = '#aee8a0';
+            found = true;
+          } else if (searchTerm === '') {
+            item.style.display = '';
+            item.style.backgroundColor = '#f9f9f9';
+          } else {
+            item.style.display = 'none';
+            item.style.backgroundColor = '#f9f9f9';
+          }
+        });
+
+        if (!found && searchTerm !== '') {
+          MsgError.textContent = 'Aucun voiture trouvé.';
+        } else {
+          MsgError.textContent = '';
+        }
+      });
+    }
+
+    filterListByStartCharacter('searchInput', 'carList');
+  </script>
+</body>
+</html>

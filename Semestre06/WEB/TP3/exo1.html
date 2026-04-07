@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <title>Exercice 1</title>
+  <style>
+    #monElement {
+      width: 150px;
+      height: 100px;
+      border: 2px solid black;
+      text-align: center;
+      line-height: 100px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Exemple de Modification de Style en JavaScript</h2>
+  <label>Entrez du texte :</label>
+  <input type="text" id="inputTexte" value="Bonjour !">
+  <button onclick="modifierElement()">Appliquer les changements</button>
+  <br><br>
+  <div id="monElement">Texte initial</div>
+
+  <script>
+    function modifierElement() {
+      var valeur = document.getElementById("inputTexte").value;
+      var element = document.getElementById("monElement");
+
+      element.textContent = valeur;
+      element.style.color = "green";
+      element.style.width = "300px";
+      element.style.height = "150px";
+      element.style.border = "3px dashed blue";
+      element.style.backgroundColor = "#aee8a0";
+      element.style.fontFamily = "Georgia, serif";
+      element.style.textAlign = "center";
+      element.style.lineHeight = "150px";
+      element.style.fontSize = "20px";
+      element.style.fontWeight = "bold";
+    }
+  </script>
+</body>
+</html>
