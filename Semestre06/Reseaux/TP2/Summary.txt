@@ -1,0 +1,419 @@
+========================================================
+  COURS : ARP, ICMP, FRAGMENTATION IP, UDP BROADCAST ET NAT
+  Réseaux Avancés - M1 SIC/IA
+========================================================
+
+Ce cours couvre les concepts fondamentaux abordés dans le TP 2.
+Il est structuré en 4 parties correspondant aux 4 exercices du TP.
+
+
+════════════════════════════════════════════════════════
+ PARTIE I — ARP ET ICMP
+════════════════════════════════════════════════════════
+
+─────────────────────────────────
+ 1. ARP (Address Resolution Protocol)
+─────────────────────────────────
+
+Définition :
+  ARP est un protocole de la couche liaison (couche 2 du modèle OSI) dont le rôle
+  est de faire la correspondance entre une adresse IP (couche 3) et une adresse MAC
+  (couche 2) dans un réseau local.
+
+Pourquoi en a-t-on besoin ?
+  Sur un réseau local, les machines communiquent via leurs adresses MAC.
+  Mais les applications utilisent des adresses IP. Il faut donc un mécanisme pour
+  "traduire" une adresse IP en adresse MAC avant d'envoyer une trame Ethernet.
+
+Fonctionnement :
+  - La machine A veut contacter la machine B (dont elle connaît l'IP).
+  - A diffuse (broadcast) un message ARP Request : "Qui a l'IP X.X.X.X ? Donne-moi ton adresse MAC."
+  - Toutes les machines du réseau reçoivent ce message, mais seule B répond.
+  - B envoie un ARP Reply (unicast) : "C'est moi, mon adresse MAC est XX:XX:XX:XX:XX:XX."
+  - A stocke la correspondance IP↔MAC dans sa table ARP (ARP cache) pour éviter
+    de redemander à chaque fois.
+
+Types de messages ARP :
+  - ARP Request  (opcode == 1) : Requête diffusée pour demander une adresse MAC.
+  - ARP Reply    (opcode == 2) : Réponse unicast contenant l'adresse MAC demandée.
+
+Adresses importantes :
+  - Adresse MAC de broadcast : FF:FF:FF:FF:FF:FF (reçue par toutes les machines du réseau local).
+  - Les messages ARP ne traversent pas les routeurs (ils restent dans le réseau local).
+
+Commandes utiles :
+  - arp -a       → Affiche la table ARP locale (associations IP ↔ MAC connues).
+  - ipconfig     → (Windows) Affiche les interfaces réseau et leur configuration.
+  - ifconfig     → (Linux/Mac) Affiche les interfaces réseau.
+
+Filtre Wireshark :
+  arp.opcode==1 || arp.opcode==2
+  → Affiche les ARP Request et ARP Reply.
+
+
+─────────────────────────────────
+ 2. ICMP (Internet Control Message Protocol)
+─────────────────────────────────
+
+Définition :
+  ICMP est un protocole de la couche réseau (couche 3) utilisé pour envoyer des
+  messages de contrôle et d'erreur entre machines IP. Il ne transporte pas de
+  données applicatives, mais des informations sur l'état du réseau.
+
+Rôle principal :
+  Signaler des erreurs et tester la connectivité entre deux machines.
+
+Types de messages ICMP les plus importants :
+
+  Type 0  — Echo Reply
+    → Réponse à un ping. Envoyée par la machine de destination pour confirmer
+      qu'elle a bien reçu l'Echo Request.
+
+  Type 8  — Echo Request
+    → Message envoyé par la commande "ping". Sert à tester si une machine est
+      joignable.
+
+  Type 11 — Time Exceeded (Temps dépassé)
+    → Envoyé par un routeur intermédiaire quand le TTL (Time To Live) d'un paquet
+      IP atteint 0. Ce message contient une copie du paquet original qui a expiré.
+      C'est ce mécanisme qu'exploite la commande tracert/traceroute.
+
+  Type 3  — Destination Unreachable (Destination inaccessible)
+    → Envoyé quand un paquet ne peut pas être livré. Par exemple :
+      Code 3 : Port Unreachable → Le port de destination n'est pas ouvert.
+
+Structure d'un message ICMP :
+  [ En-tête IP ] [ Type ICMP | Code ICMP | Checksum | Données (payload) ]
+
+  Le champ "Data" (payload) contient souvent une copie du message original
+  qui a causé l'erreur (pour le débogage).
+
+Commande PING :
+  Fonctionnement :
+    - Envoie des ICMP Echo Request vers la machine cible.
+    - Attend des ICMP Echo Reply en retour.
+    - Mesure le temps de réponse (RTT - Round Trip Time).
+  Usage : ping 127.0.0.1  (loopback, teste la pile réseau locale)
+          ping google.com  (teste la connectivité vers internet)
+
+Commande TRACERT / TRACEROUTE :
+  Fonctionnement :
+    - Envoie des paquets avec un TTL croissant (1, 2, 3, ...).
+    - Chaque routeur sur le chemin décrémente le TTL de 1.
+    - Quand le TTL atteint 0, le routeur envoie un ICMP Type 11 (Time Exceeded).
+    - Cela permet de découvrir chaque saut (routeur) sur le chemin vers la destination.
+  
+  Sur Windows (tracert) :
+    → Utilise ICMP Echo Request/Reply + ICMP Time Exceeded (types 8, 0, 11)
+  
+  Sur Linux (traceroute) :
+    → Utilise des datagrammes UDP + ICMP Time Exceeded (type 11)
+      et ICMP Destination Unreachable (type 3) quand la destination est atteinte.
+
+Filtres Wireshark :
+  icmp.type == 0 || icmp.type == 8         → Ping (Echo Request/Reply)
+  icmp.type == 0 || icmp.type == 8 || icmp.type == 11  → Tracert Windows
+  icmp.type == 3 || icmp.type == 11        → Traceroute Linux
+
+TTL (Time To Live) :
+  Définition : Champ dans l'en-tête IP qui limite le nombre de sauts (routeurs)
+  qu'un paquet peut traverser. Chaque routeur décrémente ce compteur de 1.
+  Quand TTL = 0, le paquet est détruit et un ICMP Time Exceeded est renvoyé.
+  But : Éviter que les paquets tournent indéfiniment dans le réseau (boucles).
+
+
+════════════════════════════════════════════════════════
+ PARTIE II — FRAGMENTATION IP ET FLAGS
+════════════════════════════════════════════════════════
+
+─────────────────────────────────
+ 1. MTU (Maximum Transmission Unit)
+─────────────────────────────────
+
+Définition :
+  Le MTU est la taille maximale d'un paquet (en octets) qu'une interface réseau
+  peut transmettre en une seule fois.
+  
+  Valeur standard Ethernet : 1500 octets.
+
+Problème :
+  Si un paquet IP est plus grand que le MTU du réseau, il doit être découpé
+  en morceaux plus petits → c'est la FRAGMENTATION.
+
+─────────────────────────────────
+ 2. Fragmentation IP
+─────────────────────────────────
+
+Définition :
+  La fragmentation est le mécanisme par lequel un routeur (ou la machine source)
+  découpe un grand paquet IP en plusieurs fragments plus petits pour respecter
+  le MTU du réseau.
+
+Réassemblage :
+  Les fragments sont réassemblés UNIQUEMENT par la machine de destination finale,
+  pas par les routeurs intermédiaires.
+
+Champs importants dans l'en-tête IP pour la fragmentation :
+
+  Identification (ID) :
+    Identifiant commun à tous les fragments d'un même paquet original.
+    Permet à la destination de regrouper les fragments ensemble.
+
+  Flags (3 bits) :
+    - Bit 0 : Réservé (toujours 0)
+    - Bit 1 : DF (Don't Fragment)
+        = 1 → Interdire la fragmentation. Si le paquet est trop grand, il est
+              détruit et un ICMP "Fragmentation Needed" est envoyé.
+        = 0 → La fragmentation est autorisée.
+    - Bit 2 : MF (More Fragments)
+        = 1 → Il y a encore d'autres fragments qui suivent.
+        = 0 → Dernier fragment (ou paquet non fragmenté).
+
+  Fragment Offset :
+    Indique la position (en unités de 8 octets) du fragment dans le paquet original.
+    Le premier fragment a un offset = 0.
+
+Exemple :
+  Un paquet de 4500 octets de données UDP sur un réseau Ethernet (MTU = 1500) :
+  → Fragment 1 : offset = 0,    MF = 1 (d'autres suivent)
+  → Fragment 2 : offset = 185,  MF = 1
+  → Fragment 3 : offset = 370,  MF = 0 (dernier fragment)
+
+Filtre Wireshark pour la fragmentation :
+  ip.frag_offset != 0 || ip.flags.mf == 1
+  → Affiche tous les fragments IP.
+
+─────────────────────────────────
+ 3. ICMP Destination Unreachable — Port Unreachable (Type 3, Code 3)
+─────────────────────────────────
+
+Contexte :
+  Quand on envoie un datagramme UDP vers un port fermé sur une machine,
+  la machine destinataire ne peut pas livrer les données (aucun programme
+  n'écoute sur ce port). Elle répond alors avec :
+  → ICMP Type 3 (Destination Unreachable), Code 3 (Port Unreachable)
+
+Contenu du message ICMP d'erreur :
+  Le message ICMP d'erreur contient toujours une copie partielle du message
+  original qui a causé le problème (en-tête IP + les 8 premiers octets du
+  datagramme fautif). Cela permet à l'émetteur de savoir quel paquet a échoué.
+
+
+════════════════════════════════════════════════════════
+ PARTIE III — UDP BROADCAST
+════════════════════════════════════════════════════════
+
+─────────────────────────────────
+ 1. UDP (User Datagram Protocol)
+─────────────────────────────────
+
+Définition :
+  UDP est un protocole de transport (couche 4) sans connexion et sans garantie
+  de livraison. Il est plus simple et plus rapide que TCP.
+
+Caractéristiques :
+  - Pas de connexion préalable (pas de "handshake" comme TCP).
+  - Pas de confirmation de réception (pas d'accusé de réception).
+  - Pas de contrôle de flux ni de congestion.
+  - Faible latence → idéal pour les applications temps réel.
+
+Avantages sur TCP pour certains usages :
+  - Streaming vidéo/audio (mieux vaut perdre quelques paquets que d'attendre).
+  - Jeux vidéo en ligne.
+  - DNS (requêtes courtes et rapides).
+  - Découverte de services en réseau local (broadcast).
+
+─────────────────────────────────
+ 2. Broadcast UDP
+─────────────────────────────────
+
+Définition :
+  Le broadcast (diffusion) permet d'envoyer un message à TOUTES les machines
+  d'un réseau local en une seule transmission.
+
+Adresse de broadcast :
+  Chaque réseau a une adresse de broadcast. C'est l'adresse où tous les bits
+  de la partie "hôte" sont à 1.
+
+  Exemple :
+    Réseau : 192.168.1.0 / 24
+    Masque : 255.255.255.0
+    Broadcast : 192.168.1.255
+    → Tout paquet envoyé à 192.168.1.255 est reçu par toutes les machines
+      du réseau 192.168.1.0/24.
+
+  Broadcast limité : 255.255.255.255 (reçu uniquement sur le réseau local
+  immédiat, ne passe pas les routeurs).
+
+Comment trouver son adresse de broadcast :
+  Méthode 1 (Windows) : arp -a → trouver l'entrée avec l'adresse MAC ff:ff:ff:ff:ff:ff
+  Méthode 2 : ipconfig → récupérer l'adresse IP et le masque, puis appliquer le masque.
+
+Cas d'usage concret :
+  Un jeu multijoueur en LAN envoie périodiquement un broadcast UDP pour annoncer
+  sa présence. Les autres machines qui écoutent sur ce port détectent le serveur
+  automatiquement, sans configuration manuelle.
+
+TWH (Three-Way Handshake) :
+  Mécanisme d'établissement de connexion de TCP (SYN, SYN-ACK, ACK).
+  UDP n'en a pas besoin, ce qui le rend plus rapide pour le broadcast.
+
+Filtre Wireshark :
+  udp.port == 5000
+  → Affiche tous les messages UDP sur le port 5000.
+
+Socket UDP en Python (code de base) :
+  import socket
+  sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+  sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)  # activer le broadcast
+  sock.sendto(b"message", ("192.168.1.255", 5000))
+
+  Explications :
+    AF_INET      → Protocole IPv4
+    SOCK_DGRAM   → Socket UDP (datagramme)
+    SO_BROADCAST → Option nécessaire pour autoriser les envois en broadcast
+
+
+════════════════════════════════════════════════════════
+ PARTIE IV — NAT (Network Address Translation)
+════════════════════════════════════════════════════════
+
+─────────────────────────────────
+ 1. Problème résolu par le NAT
+─────────────────────────────────
+
+Contexte :
+  Les adresses IPv4 sont limitées (environ 4,3 milliards). Elles sont épuisées.
+  La majorité des réseaux domestiques et d'entreprise utilisent des adresses
+  IP privées (non routables sur internet) :
+    - 10.0.0.0    /8   → 10.x.x.x
+    - 172.16.0.0  /12  → 172.16.x.x à 172.31.x.x
+    - 192.168.0.0 /16  → 192.168.x.x
+
+  Ces adresses ne peuvent pas être utilisées directement sur internet.
+
+─────────────────────────────────
+ 2. NAT — Définition et fonctionnement
+─────────────────────────────────
+
+Définition :
+  NAT (Network Address Translation) est un mécanisme réalisé par un routeur
+  qui traduit les adresses IP (et parfois les ports) entre un réseau privé
+  et internet (ou un autre réseau).
+
+Fonctionnement (NAT de base, aussi appelé NAPT ou PAT) :
+  1. Une machine du réseau local (ex: 192.168.1.10) envoie un paquet vers internet.
+  2. Le routeur NAT remplace l'adresse IP source privée (192.168.1.10) par son
+     adresse IP publique (ex: 88.123.45.67) et garde une table de correspondance.
+  3. La réponse d'internet arrive avec comme destination l'IP publique du routeur.
+  4. Le routeur consulte sa table NAT et redirige le paquet vers 192.168.1.10.
+
+Avantages du NAT :
+  - Économise les adresses IP publiques (toute une maison partage 1 seule IP publique).
+  - Ajoute une couche de sécurité : les machines internes ne sont pas directement
+    exposées à internet.
+
+─────────────────────────────────
+ 3. Redirection de ports (Port Forwarding)
+─────────────────────────────────
+
+Définition :
+  La redirection de ports est une règle NAT qui permet de rendre accessible depuis
+  l'extérieur un service hébergé sur une machine du réseau privé.
+
+Exemple du TP :
+  Une machine virtuelle (IP privée : 10.0.2.15) héberge un serveur web sur le port 5000.
+  Le routeur NAT de VirtualBox redirige :
+    Port 80 de la machine hôte (0.0.0.0:80) → Port 5000 de la VM (10.0.2.15:5000)
+
+  Résultat : En tapant http://127.0.0.1/ dans le navigateur de la machine hôte,
+  la requête est redirigée vers le serveur Python qui tourne dans la VM.
+
+Règle de redirection (exemple du TP) :
+  Protocole : TCP
+  IP hôte   : 0.0.0.0  (toutes les interfaces de la machine hôte)
+  Port hôte : 80
+  IP invité : 10.0.2.15 (adresse de la VM)
+  Port invité : 5000
+
+─────────────────────────────────
+ 4. Loopback (127.0.0.1)
+─────────────────────────────────
+
+Définition :
+  L'adresse 127.0.0.1 est une adresse de bouclage (loopback). Elle désigne
+  toujours la machine locale elle-même. Les paquets envoyés à cette adresse
+  ne quittent jamais la machine.
+
+Utilité :
+  Tester des services localement sans réseau physique.
+  Dans le TP NAT, http://127.0.0.1/ accède au port redirigé par le NAT de VirtualBox.
+
+─────────────────────────────────
+ 5. Socket serveur TCP en Python (code du TP)
+─────────────────────────────────
+
+  import socket
+  SocketServeur = socket.socket()           # TCP par défaut (SOCK_STREAM)
+  SocketServeur.bind(("0.0.0.0", 5000))     # écouter sur toutes les interfaces, port 5000
+  SocketServeur.listen(4)                   # file d'attente de 4 connexions max
+  while True:
+      conn, addr = SocketServeur.accept()   # attendre une connexion entrante
+      print(conn, addr)
+      print(conn.recv(1024))                # lire la requête HTTP
+      conn.send(b"...<html>...</html>")     # envoyer une réponse HTML
+      conn.close()                          # fermer la connexion
+
+  Explications :
+    bind("0.0.0.0", 5000) → écouter sur toutes les interfaces réseau de la VM.
+    listen(4)              → accepter jusqu'à 4 connexions en attente.
+    accept()               → bloque jusqu'à qu'un client se connecte.
+    recv(1024)             → lire jusqu'à 1024 octets envoyés par le client.
+    send(...)              → envoyer une réponse (ici une fausse page HTML).
+
+
+════════════════════════════════════════════════════════
+ RÉSUMÉ DES PROTOCOLES ET LEUR COUCHE OSI
+════════════════════════════════════════════════════════
+
+  Couche 2 (Liaison)    : ARP   → Résolution d'adresses IP en adresses MAC
+  Couche 3 (Réseau)     : IP    → Routage des paquets, fragmentation
+                          ICMP  → Messages de contrôle et d'erreur
+  Couche 4 (Transport)  : UDP   → Transport sans connexion (broadcast, streaming)
+                          TCP   → Transport fiable avec connexion
+
+
+════════════════════════════════════════════════════════
+ RÉCAPITULATIF DES FILTRES WIRESHARK
+════════════════════════════════════════════════════════
+
+  ARP Request/Reply           : arp.opcode==1 || arp.opcode==2
+  ICMP Ping                   : icmp.type==0 || icmp.type==8
+  ICMP Tracert (Windows)      : icmp.type==0 || icmp.type==8 || icmp.type==11
+  ICMP Traceroute (Linux)     : icmp.type==3 || icmp.type==11
+  Fragments IP                : ip.frag_offset!=0 || ip.flags.mf==1
+  UDP sur port 5000           : udp.port==5000
+
+
+════════════════════════════════════════════════════════
+ GLOSSAIRE RAPIDE
+════════════════════════════════════════════════════════
+
+  ARP    : Address Resolution Protocol — traduit IP → MAC
+  ICMP   : Internet Control Message Protocol — messages d'erreur et de contrôle
+  TTL    : Time To Live — limite le nombre de sauts d'un paquet IP
+  MTU    : Maximum Transmission Unit — taille max d'un paquet sur un réseau
+  NAT    : Network Address Translation — traduit IP privée ↔ IP publique
+  UDP    : User Datagram Protocol — transport sans connexion
+  TCP    : Transmission Control Protocol — transport fiable avec connexion
+  MAC    : Media Access Control — adresse physique d'une carte réseau
+  RTT    : Round Trip Time — temps d'aller-retour d'un paquet
+  LAN    : Local Area Network — réseau local
+  IP     : Internet Protocol — protocole d'adressage et de routage
+  DF     : Don't Fragment — flag IP interdisant la fragmentation
+  MF     : More Fragments — flag IP indiquant qu'il reste des fragments
+  TWH    : Three-Way Handshake — établissement de connexion TCP (SYN/SYN-ACK/ACK)
+
+========================================================
+  Fin du cours
+========================================================
