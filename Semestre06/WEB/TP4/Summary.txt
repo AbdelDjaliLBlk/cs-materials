@@ -1,0 +1,119 @@
+=====================================================
+  TP N°4 - Programmation Web (Ing 4) - 2025/2026
+  PHP OOP, Cookies, Sessions et Bases de Données
+=====================================================
+
+OBJECTIF GÉNÉRAL
+----------------
+Ce TP couvre les concepts avancés du développement web côté serveur
+en PHP : manipulation de chaînes/tableaux, upload de fichiers,
+programmation orientée objet (POO), gestion des sessions et cookies,
+et interaction avec une base de données MySQL.
+
+
+EXERCICE 1 - Exploration des fonctions PHP
+------------------------------------------
+- Analyser et commenter un script PHP utilisant des fonctions de
+  manipulation de chaînes et de tableaux.
+- Fonctions abordées :
+    * strrev()       → inverse une chaîne
+    * ucfirst()      → met la première lettre en majuscule
+    * str_pad()      → complète une chaîne à une longueur donnée
+    * str_repeat()   → répète une chaîne N fois
+    * explode()      → découpe une chaîne en tableau
+    * array_unique() → supprime les doublons d'un tableau
+    * array_filter() → filtre les éléments d'un tableau
+    * array_map()    → applique une fonction à chaque élément
+    * json_encode()  → convertit un tableau en JSON
+    * json_decode()  → convertit un JSON en tableau PHP
+
+
+EXERCICE 2 - Formulaire de candidature avec authentification
+------------------------------------------------------------
+- Partie A : Upload de fichier
+    * Analyser source.php et uploader.php
+    * Comprendre le rôle de enctype="multipart/form-data"
+    * Observer le comportement avec méthode GET vs POST
+    * Les fichiers uploadés sont stockés dans un dossier "telechar/"
+
+- Partie B : Formulaire de candidature
+    * Créer un formulaire complet de candidature en ligne
+    * Implémenter une authentification par login / mot de passe
+    * Afficher côté serveur les informations reçues (sans le mot de passe)
+
+
+EXERCICE 3 - POO : Classe abstraite, Interface, Héritage, Exceptions
+--------------------------------------------------------------------
+Créer un système de gestion d'un garage automobile avec :
+
+- Classe abstraite Voiture :
+    * Propriétés protégées : $marque, $modele, $annee
+    * Méthode getDescription() → retourne la description
+    * Méthode abstraite rouler() (sans implémentation)
+
+- Interface Rechargeable :
+    * Méthode recharger()
+
+- Classes dérivées :
+    * Essence    → implémente rouler() (moteur à essence)
+    * Electrique → implémente rouler() + recharger() (Rechargeable)
+    * Hybride    → implémente rouler() + recharger() (Rechargeable)
+
+- Classe Garage :
+    * Propriété privée $voitures (tableau)
+    * ajouterVoiture() avec vérification instanceof + exception
+    * afficherVoitures() appelle rouler() pour chaque voiture
+
+- Gestion d'exceptions :
+    * Tester l'ajout d'un objet invalide
+    * Capturer l'exception avec try...catch et afficher le message
+
+
+EXERCICE 4 - Gestion des sessions et cookies
+--------------------------------------------
+- Lancer session.php sans soumettre le formulaire
+- Observer dans les DevTools le cookie de session créé (PHPSESSID)
+- Vérifier le fichier de session dans C:\laragon\tmp
+- Soumettre le formulaire et observer les changements dans le fichier
+- Répondre aux questions :
+    * Rôle de la condition : REQUEST_METHOD == "POST" && !empty(...)
+    * Objectif de l'opérateur ternaire pour $_SESSION et $_COOKIE
+    * Rôle du fichier logout.php (destruction de session)
+
+
+EXERCICE 5 - Calculatrice PHP avec enregistrement en session
+------------------------------------------------------------
+- calculateur.html : formulaire avec validation JavaScript côté client
+  (champs x, y, opérateur, case "Enregistrer le résultat")
+
+- calculateur.php à coder :
+    * Récupérer les données POST (x, y, op)
+    * Vérifier que les valeurs sont bien envoyées
+    * Exécuter l'opération choisie (+, -, *, /)
+    * Afficher le résultat
+    * Si la case est cochée : stocker les valeurs dans $_SESSION
+      pour les afficher lors de la prochaine soumission
+
+
+EXERCICE 6 - Recherche d'utilisateurs dans une base de données
+--------------------------------------------------------------
+- Créer la base de données et la table :
+
+    CREATE DATABASE IF NOT EXISTS biblio;
+    USE biblio;
+    CREATE TABLE utilisateurs (
+        id      INT AUTO_INCREMENT PRIMARY KEY,
+        nom     VARCHAR(255) NOT NULL,
+        email   VARCHAR(255) NOT NULL UNIQUE,
+        adresse VARCHAR(255)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+- Développer un script PHP de recherche/filtrage :
+    * Filtrer les utilisateurs par nom, adresse ou email
+    * Afficher les résultats dans un tableau HTML
+    * Utiliser des requêtes SQL paramétrées (PDO ou mysqli)
+
+
+=====================================================
+  FIN DU RÉSUMÉ
+=====================================================

@@ -1,0 +1,238 @@
+================================================================
+        TP4 - POP, IMAP ET SMTP - RESUME COMPLET
+================================================================
+
+AVANT DE COMMENCER (OBLIGATOIRE)
+---------------------------------
+1. Creer un nouveau compte Gmail (ne pas utiliser votre vrai compte)
+2. Activer la validation en deux etapes (2FA) :
+   https://myaccount.google.com/security
+3. Generer un mot de passe d'application :
+   https://myaccount.google.com/apppasswords
+   --> Ce mot de passe (16 caracteres) remplace votre vrai mot de passe
+       dans TOUS les programmes du TP
+
+
+================================================================
+EXERCICE I - ACCES BOITE MAIL AVEC POP
+================================================================
+
+Protocole  : POP (Post Office Protocol)
+Serveur    : pop.gmail.com
+Port       : 995 (avec SSL)
+Role       : Telecharger les emails depuis le serveur
+
+IMPORTANT : POP supprime les emails du serveur apres telechargement
+            (ou les garde selon configuration Gmail)
+
+COMMANDES A TESTER (a taper dans le client Python) :
+-----------------------------------------------------
+  USER votre@gmail.com         --> envoie le login
+  PASS mot_de_passe_application --> envoie le mot de passe app
+  STAT                         --> nombre de mails + taille totale
+  UIDL                         --> liste des identifiants uniques
+  LIST                         --> liste des mails avec tailles
+  RETR 3                       --> telecharger le mail numero 3
+  QUIT                         --> fermer la session
+
+REPONSES SERVEUR :
+  +OK  --> commande acceptee
+  -ERR --> erreur
+
+Commandes dont la reponse se termine par "\r\n.\r\n" :
+  list, top, retr, uidl
+Commandes avec une seule ligne de reponse :
+  USER, PASS, STAT, QUIT
+
+CAPTURES D'ECRAN REQUISES :
+  - Resultat de chaque commande ci-dessus
+
+
+================================================================
+EXERCICE II - CLIENT IMAP
+================================================================
+
+Protocole  : IMAP (Internet Message Access Protocol)
+Serveur    : imap.gmail.com
+Port       : 993 (avec SSL)
+Role       : Acceder aux emails SANS les supprimer du serveur
+
+DIFFERENCE AVEC POP :
+  POP  --> telecharge et (peut) supprimer du serveur
+  IMAP --> reste sur le serveur, synchronise sur plusieurs appareils
+
+NOTE : Le programme genere les tags automatiquement (horloge systeme)
+       Il suffit de taper la commande sans tag
+
+COMMANDES A TESTER (dans l'ordre) :
+-------------------------------------
+  CAPABILITY
+    --> affiche les fonctionnalites supportees par le serveur
+
+  LOGIN votre@gmail.com mot_de_passe_application
+    --> authentification
+
+  LIST "" "*"
+    --> liste tous les dossiers de la boite mail
+
+  SELECT INBOX
+    --> ouvre la boite de reception
+
+  FETCH 2 FLAGS
+    --> affiche les flags (lu, repondu, etc.) du mail numero 2
+
+  FETCH 2 BODY.PEEK[TEXT]
+    --> affiche le corps du mail numero 2 sans le marquer comme lu
+
+  STORE 2 +FLAGS (Answered)
+    --> marque le mail numero 2 comme "repondu"
+
+  FETCH 2 FLAGS
+    --> verifier que le flag Answered a bien ete ajoute
+
+  FETCH 2 BODY.PEEK[HEADER.FIELDS (To From Date Content-Type)]
+    --> affiche seulement certains entetes du mail 2
+
+  UID FETCH 4 BODY.PEEK[HEADER.FIELDS (To From Date Content-Type)]
+    --> meme chose mais avec l'UID du mail
+
+  SEARCH SINCE 22-MAR-2018
+    --> cherche les mails depuis le 22 mars 2018
+
+  SEARCH BEFORE 31-DEC-2018
+    --> cherche les mails avant le 31 decembre 2018
+
+  SEARCH FROM codek9111@yahoo.fr
+    --> cherche les mails d'un expediteur precis
+
+  SEARCH ALL
+    --> tous les mails
+
+  UID SEARCH ALL
+    --> tous les mails avec leurs UIDs
+
+  FETCH 2 FLAGS
+    --> verifier les flags finaux
+
+  CLOSE
+    --> fermer la boite selectionnee (efface les mails marques)
+
+  LOGOUT
+    --> deconnexion du serveur
+
+CAPTURES D'ECRAN REQUISES :
+  - Resultat de chaque commande ci-dessus (17 captures)
+
+
+================================================================
+EXERCICE III - ENVOIE MAIL PAR SMTP
+================================================================
+
+Protocole  : SMTP (Simple Mail Transfer Protocol)
+Serveur    : smtp.gmail.com
+Port       : 587 (avec STARTTLS)
+Role       : Envoyer un email
+
+MARCHE A SUIVRE :
+  1. Ouvrir le fichier Python SMTP
+  2. Remplacer "Votre_@MAIL" par votre adresse Gmail
+  3. Remplacer "Votre_MDP_Application" par votre mot de passe app
+  4. Remplacer "VOTRE.ADRESSE.EMAIL.SVP@gmail.com" par l'adresse recepteur
+  5. Executer le programme
+
+COMMANDES ECHANGEES AVEC LE SERVEUR (visibles grace a set_debuglevel(1)) :
+---------------------------------------------------------------------------
+  EHLO [IP]          --> salutation + identification du client
+  STARTTLS           --> demarrer le chiffrement TLS
+  EHLO [IP]          --> re-salutation apres TLS
+  AUTH LOGIN PLAIN   --> authentification (encodee en base64)
+  MAIL FROM:<...>    --> adresse expediteur
+  RCPT TO:<...>      --> adresse destinataire
+  DATA               --> debut du contenu du mail
+  [headers + corps]  --> contenu RFC822 (Subject, From, To, Body)
+  .                  --> fin du mail (point seul sur une ligne)
+  QUIT               --> fermeture de la connexion
+
+FORMAT RFC822 DU MAIL :
+  Subject: Sujet du mail
+  From: expediteur@gmail.com
+  To: destinataire@gmail.com
+  [ligne vide]
+  Corps du message...
+
+CAPTURES D'ECRAN REQUISES :
+  - La console Python montrant tous les echanges SMTP
+  - La boite mail destinataire avec le mail recu
+
+
+================================================================
+EXERCICE IV - DECODER CONTENU BASE64
+================================================================
+
+Role : Decoder une piece jointe (image jpg) encodee en base64
+       L'encodage base64 convertit les fichiers binaires en texte ASCII
+       pour les transmettre par email
+
+ETAPES A SUIVRE :
+-----------------
+  1. Lancer le client IMAP (exercice II)
+
+  2. Se connecter et selectionner INBOX :
+       LOGIN votre@gmail.com app_password
+       SELECT INBOX
+
+  3. Acceder a un mail avec piece jointe image jpg (petite taille)
+       FETCH [numero] BODY.PEEK[TEXT]
+
+  4. Copier TOUT le contenu affiche dans IDLE :
+       File --> Save As --> MessageEncoder.txt
+       (sauvegarder dans le meme dossier que le programme de decodage)
+
+  5. Ouvrir MessageEncoder.txt et supprimer :
+       - Les entetes HTTP/IMAP en haut
+       - Les lignes de commandes
+       - Le code de reponse serveur a la fin
+       - Garder UNIQUEMENT le contenu base64
+
+  6. Executer le programme de decodage Python
+
+  7. Ouvrir MessageDecoder.jpg --> l'image doit etre lisible !
+
+COMMENT FONCTIONNE LE DECODAGE BASE64 :
+  - Chaque caractere base64 = 6 bits
+  - 4 caracteres base64 = 3 octets (24 bits)
+  - Table : A-Z = 0-25, a-z = 26-51, 0-9 = 52-61, + = 62, / = 63
+  - Le "=" en fin de chaine = padding (remplissage)
+
+CAPTURES D'ECRAN REQUISES :
+  - Le contenu base64 brut dans IDLE
+  - Le fichier MessageEncoder.txt (apres nettoyage)
+  - L'image MessageDecoder.jpg ouverte
+
+
+================================================================
+EXERCICE V - CONFIGURER GMAIL POUR POP ET IMAP
+================================================================
+
+ETAPES :
+  1. Ouvrir Gmail
+  2. Cliquer sur la roue dentee (Parametres)
+  3. Cliquer sur "Voir tous les parametres"
+  4. Aller dans l'onglet "Transfert et POP/IMAP"
+
+CONFIGURATION POP :
+  - Activer le protocole POP pour tous les messages
+  - Choisir ce qui arrive aux messages apres telechargement :
+      * Conserver la copie dans Gmail (recommande pour le TP)
+      * Marquer comme lu
+      * Archiver
+      * Supprimer
+
+CONFIGURATION IMAP :
+  - Activer IMAP
+  - Choisir le comportement lors de la suppression IMAP :
+      * Effacement automatique (mise a jour immediate serveur)
+      * Desactiver l'effacement automatique
+
+
+================================================================

@@ -1,0 +1,31 @@
+=============
+ Exercice 02
+=============
+Dans Source.php :
+- enctype = ... est l'encodage qui permet d'envoyer des fichier binaires. 
+- On utilise POST en non pas GET car elle ne convient pas au upload de fichier (limitée) et car $_FILES marche seulement 
+  avec POST --> Erreur
+ 
+=============
+ Exercice 04
+=============
+
+1)  Rôle de la condition : if
+    ($_SERVER["REQUEST_METHOD"] == "POST" && !empty($_POST[“nom”]))
+    Cette condition vérifie que le formulaire a été envoyé avec la
+    méthode POST et que le champ “nom” n’est pas vide. Le code à
+    l’intérieur ne s’exécute que si ces deux conditions sont vraies.
+
+2)  Objectif des lignes : nomSession = isset(_SESSION[“user”]) ?
+    $_SESSION["user"] : null;$nomCookie =
+    isset($_COOKIE[“informatique”]) ? $_COOKIE[“informatique”] : null;
+
+Ces lignes servent à vérifier si une variable de session et un cookie
+existent. Si oui, elles récupèrent leurs valeurs, sinon elles mettent
+null. Cela évite les erreurs et permet une récupération sécurisée des
+données.
+
+3)  Objectif du fichier logout.php : Ce fichier permet de déconnecter
+    l’utilisateur. Il supprime toutes les variables de session, détruit
+    la session, efface les cookies et redirige l’utilisateur vers une
+    autre page (souvent la page de connexion).

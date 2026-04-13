@@ -1,0 +1,744 @@
+========================================================
+  COURS : COUCHE APPLICATION - PARTIE I
+  FTP, TFTP, DNS, HTTP, HTTPS, Cookies
+  Réseaux Avancés - M1 SIC/IA
+========================================================
+
+Ce cours couvre tous les protocoles et concepts abordés dans le TP 3.
+
+
+════════════════════════════════════════════════════════
+ PARTIE I — FTP (File Transfer Protocol)
+════════════════════════════════════════════════════════
+
+─────────────────────────────────
+ 1. Définition et rôle
+─────────────────────────────────
+
+Définition :
+  FTP est un protocole de la couche application (couche 7) qui permet de transférer
+  des fichiers entre un client et un serveur sur un réseau TCP/IP.
+
+Caractéristiques :
+  - Fonctionne sur TCP (fiable, avec connexion).
+  - Utilise DEUX connexions TCP séparées (c'est sa particularité principale) :
+      * Connexion de CONTRÔLE : port 21 → pour envoyer des commandes et recevoir des codes de réponse.
+      * Connexion de DONNÉES  : port 20 (en mode actif) → pour transférer le contenu des fichiers.
+  - Protocole en clair : les commandes, y compris le login et mot de passe,
+    sont visibles dans Wireshark (FTP n'est pas chiffré).
+
+─────────────────────────────────
+ 2. Modes FTP : Actif vs Passif
+─────────────────────────────────
+
+Mode ACTIF (Active FTP) :
+  - Le client ouvre la connexion de contrôle vers le port 21 du serveur.
+  - Quand une commande nécessite un transfert de données, le CLIENT ouvre un port
+    et envoie au serveur la commande PORT (port client).
+  - Le SERVEUR initie la connexion de données depuis son port 20 vers le port client.
+  - Problème : Les pare-feu bloquent souvent les connexions entrantes → c'est pourquoi
+    le TP demande de désactiver le pare-feu Windows pour utiliser le mode actif.
+
+Mode PASSIF (Passive FTP) :
+  - Le CLIENT initie toujours les deux connexions (contrôle ET données).
+  - Le serveur attend passivement que le client se connecte sur un port donné.
+  - Plus compatible avec les pare-feu et le NAT.
+
+Filtres Wireshark :
+  tcp.port==21   → Connexion de contrôle FTP (commandes)
+  tcp.port==20   → Connexion de données FTP (contenu des fichiers, mode actif)
+  ftp-data       → Données FTP (contenu transféré)
+  ip.addr == X.X.X.X || ftp-data  → Tout le trafic FTP avec un serveur donné
+
+─────────────────────────────────
+ 3. Commandes FTP importantes
+─────────────────────────────────
+
+Commandes envoyées par le CLIENT au serveur :
+
+  USER <nom>     → Envoie le nom d'utilisateur (précède le mot de passe)
+  PASS <mdp>     → Envoie le mot de passe
+  PWD            → Print Working Directory : affiche le répertoire courant
+  CWD <chemin>   → Change Working Directory : change de répertoire (équivalent CD)
+  LIST           → Liste les fichiers du répertoire courant (équivalent LS/DIR)
+  NLST           → Name List : liste les noms de fichiers sans détails
+  RETR <fichier> → Retrieve : télécharger un fichier depuis le serveur vers le client
+  STOR <fichier> → Store : envoyer un fichier du client vers le serveur
+  TYPE A         → Mode ASCII : pour les fichiers texte (commande "ascii" dans le terminal)
+  TYPE I         → Mode Image/Binaire : pour les fichiers binaires (commande "binary")
+  PORT           → Indique au serveur le port du client pour la connexion de données (mode actif)
+  PASV           → Demande au serveur d'attendre passivement (mode passif)
+  QUIT           → Déconnexion
+
+Codes de réponse du SERVEUR :
+  Les codes FTP sont des nombres à 3 chiffres (similaires aux codes HTTP) :
+  - 2xx → Succès (ex: 200 OK, 220 service ready, 226 transfer complete)
+  - 1xx → Action initiée, en attente
+  - 3xx → Action en attente d'information supplémentaire (ex: 331 mot de passe requis)
+  - 4xx / 5xx → Erreurs
+
+Exemples importants :
+  220 → Service prêt (message d'accueil du serveur FTP)
+  331 → Nom d'utilisateur OK, mot de passe requis
+  230 → Connexion réussie (logged in)
+  200 → Commande acceptée
+  257 → Répertoire courant (réponse à PWD)
+  150 → Ouverture de la connexion de données
+  226 → Transfert terminé
+
+─────────────────────────────────
+ 4. Accès anonyme FTP
+─────────────────────────────────
+
+Définition :
+  Certains serveurs FTP permettent un accès public sans compte.
+  On s'authentifie avec :
+    Login    : anonymous
+    Mot de passe : n'importe quelle adresse email valide (convention)
+
+Usage : Télécharger des fichiers publics (logiciels libres, archives, etc.).
+
+─────────────────────────────────
+ 5. Modes de transfert
+─────────────────────────────────
+
+Mode ASCII (TYPE A) :
+  Pour les fichiers texte. FTP convertit les fins de ligne selon le système cible
+  (CR+LF sous Windows, LF sous Unix). Ne jamais utiliser pour les fichiers binaires
+  car cela corromprait le fichier.
+
+Mode Binaire / Image (TYPE I) :
+  Pour tous les fichiers non-texte : images, exécutables, archives ZIP, etc.
+  Aucune conversion → les octets sont transférés tels quels.
+
+─────────────────────────────────
+ 6. FTP en Python
+─────────────────────────────────
+
+Deux approches possibles :
+
+  A) Avec les sockets bruts (bas niveau) :
+     Connexion manuelle au port 21, envoi des commandes sous forme de texte.
+     Utile pour comprendre le protocole en détail.
+
+  B) Avec la bibliothèque ftplib (haut niveau) :
+     Bibliothèque standard Python qui encapsule toutes les commandes FTP.
+     
+     Principales méthodes ftplib :
+       ftplib.FTP("serveur")  → Se connecter au serveur
+       .login()               → Login anonyme
+       .login("user","pass")  → Login avec identifiants
+       .nlst()                → Liste des fichiers (NLST)
+       .cwd("repertoire")     → Changer de répertoire (CWD)
+       .retrbinary("RETR fichier", open("local","wb").write) → Télécharger un fichier binaire
+       .quit()                → Déconnexion
+
+
+════════════════════════════════════════════════════════
+ PARTIE II — TFTP-Like (protocole personnalisé)
+════════════════════════════════════════════════════════
+
+─────────────────────────────────
+ 1. TFTP (Trivial File Transfer Protocol)
+─────────────────────────────────
+
+Définition :
+  TFTP est un protocole de transfert de fichiers TRÈS simplifié.
+  Contrairement à FTP, TFTP utilise UDP (pas TCP) et n'a pas d'authentification.
+  Utilisé principalement pour le démarrage réseau (PXE Boot) et les équipements embarqués.
+
+─────────────────────────────────
+ 2. Le protocole TFTP-Like du TP
+─────────────────────────────────
+
+C'est un protocole INVENTÉ pour le TP, inspiré de TFTP mais fonctionnant sur TCP.
+Il définit son propre format de commandes.
+
+Format des commandes client → serveur :
+  "Type_Commande:NomFichier"
+  (une chaîne de texte séparée par ":")
+
+Types de commandes :
+  "0:xxx"  → Déconnexion (le contenu après : est ignoré, ex: "0:bye", "0:CYA")
+  "1:fichier.txt"  → Télécharger le fichier nommé "fichier.txt"
+  "2:"     → Lister les fichiers du répertoire courant (équivalent LS)
+  "3:SousRep"  → Changer de répertoire (équivalent CD)
+
+Format des réponses serveur → client :
+  Le serveur envoie la réponse puis termine par "--\r\n\r\n" pour signaler la fin.
+  Codes de réponse : similaires à HTTP/FTP (200 OK, 404 introuvable, 501 erreur, etc.)
+
+Sécurité (directory traversal) :
+  Si le nom de fichier contient ".." ou "/" → le serveur refuse avec "501 DIRECTORY TRAVERSAL DENIED".
+  Cela empêche un client malveillant de remonter dans l'arborescence pour accéder à des fichiers
+  en dehors du répertoire autorisé.
+
+Multi-threading :
+  Par défaut, un serveur TCP simple ne traite qu'un client à la fois (séquentiel).
+  Pour traiter plusieurs clients simultanément, on utilise le multi-threading :
+  chaque connexion entrante est traitée dans un thread séparé.
+
+
+════════════════════════════════════════════════════════
+ PARTIE III — DNS (Domain Name System)
+════════════════════════════════════════════════════════
+
+─────────────────────────────────
+ 1. Définition et rôle
+─────────────────────────────────
+
+Définition :
+  DNS est le système de "carnet d'adresses" d'internet. Il traduit les noms de domaine
+  lisibles par l'humain (ex: google.com) en adresses IP (ex: 142.250.185.14).
+
+Pourquoi ? :
+  Les humains mémorisent des noms (google.com), mais les réseaux n'utilisent que
+  des adresses IP. Le DNS fait la correspondance entre les deux.
+
+Fonctionnement :
+  1. L'utilisateur tape "google.com" dans son navigateur.
+  2. Le système demande au Resolver DNS local (souvent le routeur ou le FAI).
+  3. Si le Resolver ne connaît pas, il interroge des serveurs DNS en remontant
+     la hiérarchie (Root → .com → google.com).
+  4. La réponse (l'adresse IP) est renvoyée et mise en cache.
+
+Port DNS : UDP port 53 (aussi TCP pour les grosses réponses).
+
+─────────────────────────────────
+ 2. Hiérarchie DNS
+─────────────────────────────────
+
+  . (Root)
+  ├── .com
+  │   ├── google.com
+  │   │   ├── www.google.com
+  │   │   └── mail.google.com
+  ├── .dz
+  │   └── univ-tlemcen.dz
+  └── .org
+
+Chaque niveau est géré par des serveurs DNS différents et autoritaires.
+
+─────────────────────────────────
+ 3. Types d'enregistrements DNS
+─────────────────────────────────
+
+  A (Address record) :
+    Fait la correspondance Nom de domaine → Adresse IPv4.
+    Exemple : google.com → 142.250.185.14
+    C'est le type le plus courant (type par défaut dans nslookup).
+
+  AAAA (Quad-A record) :
+    Comme A mais pour IPv6.
+    Exemple : google.com → 2a00:1450:4007:80f::200e
+    Dans nslookup : "set type=AAAA"
+
+  CNAME (Canonical Name) :
+    Alias d'un nom de domaine. Pointe vers un autre nom de domaine (pas une IP directement).
+    Exemple : www.lequotidien-oran.com → ns002.naltis.com
+    Utilité : Plusieurs noms de domaine peuvent pointer vers le même serveur physique.
+    Dans nslookup : "set type=CNAME"
+
+  PTR (Pointer record) :
+    Résolution INVERSE : Adresse IP → Nom de domaine.
+    Exemple : 145.220.21.40 → ftp.nluug.nl
+    Utilité : Vérifier à qui appartient une adresse IP.
+    Dans nslookup : "set type=PTR"
+
+  MX (Mail eXchanger) :
+    Indique les serveurs de messagerie d'un domaine.
+    Chaque entrée MX a une valeur de préférence : plus petit = plus prioritaire.
+    Exemple : google.com → aspmx.l.google.com (préférence 10)
+    Utilité : Quand on envoie un email à user@google.com, le protocole SMTP
+    interroge le DNS pour savoir quel serveur mail contacter.
+    Dans nslookup : "set type=MX"
+
+─────────────────────────────────
+ 4. Commande nslookup
+─────────────────────────────────
+
+nslookup est l'outil en ligne de commande pour interroger manuellement les serveurs DNS.
+
+Usage :
+  nslookup                     → Lance l'interface interactive
+  > google.com                 → Résout le nom de domaine (type A par défaut)
+  > set type=AAAA              → Change le type d'enregistrement demandé
+  > google.com                 → Résout en IPv6
+  > set type=MX                → Chercher les serveurs mail
+  > set type=CNAME             → Chercher les alias
+  > set type=PTR               → Résolution inverse (IP → nom)
+
+"Réponse ne faisant pas autorité" :
+  Signifie que la réponse vient du cache d'un serveur intermédiaire (Resolver),
+  pas du serveur DNS autoritaire du domaine. C'est normal et attendu.
+
+Filtre Wireshark pour DNS :
+  dns.qry.name == "google.com"   → Affiche les requêtes DNS pour ce domaine
+
+─────────────────────────────────
+ 5. Resolver DNS
+─────────────────────────────────
+
+Définition :
+  Le Resolver est le composant côté client qui envoie les requêtes DNS.
+  Sur Windows, la commande "ipconfig /all" affiche l'adresse IP du serveur DNS utilisé.
+  Généralement c'est l'adresse IP du routeur (ex: 192.168.1.1) qui joue le rôle
+  de relais (forwarder) vers les DNS du FAI ou publics (8.8.8.8 pour Google DNS).
+
+
+════════════════════════════════════════════════════════
+ PARTIE IV — HTTP (HyperText Transfer Protocol)
+════════════════════════════════════════════════════════
+
+─────────────────────────────────
+ 1. Définition et rôle
+─────────────────────────────────
+
+Définition :
+  HTTP est le protocole de la couche application utilisé pour échanger des ressources
+  sur le Web (pages HTML, images, vidéos, fichiers, etc.).
+  Il fonctionne sur TCP, port 80 (ou 443 pour HTTPS).
+
+Modèle Client-Serveur :
+  - Le CLIENT (navigateur, programme Python) envoie une REQUÊTE HTTP.
+  - Le SERVEUR répond avec une RÉPONSE HTTP contenant les données demandées.
+
+─────────────────────────────────
+ 2. Structure d'une requête HTTP
+─────────────────────────────────
+
+Format général :
+  MÉTHODE /chemin/ressource HTTP/1.1\r\n
+  Header1: valeur\r\n
+  Header2: valeur\r\n
+  \r\n                  ← ligne vide = fin des headers
+  [corps de la requête si applicable]
+
+Exemple de requête GET :
+  GET / HTTP/1.1\r\n
+  Host: www.tcpipguide.com\r\n
+  Connection: close\r\n
+  \r\n
+
+Notes importantes :
+  \r\n = CRLF (Carriage Return + Line Feed) → séparateur de lignes en HTTP
+  \r\n\r\n = fin des en-têtes, début du corps (ou fin si pas de corps)
+
+─────────────────────────────────
+ 3. Structure d'une réponse HTTP
+─────────────────────────────────
+
+Format général :
+  HTTP/1.1 CODE MESSAGE\r\n
+  Header1: valeur\r\n
+  Header2: valeur\r\n
+  \r\n
+  [corps de la réponse = contenu de la ressource]
+
+Exemple :
+  HTTP/1.1 200 OK\r\n
+  Date: Thu, 13 Dec 2018 18:39:20 GMT\r\n
+  Server: Apache/2.4.37\r\n
+  Content-Length: 20757\r\n
+  Content-Type: text/html\r\n
+  \r\n
+  <html>...</html>
+
+─────────────────────────────────
+ 4. Codes de réponse HTTP
+─────────────────────────────────
+
+  1xx → Information
+  2xx → Succès
+    200 OK             → Requête réussie, ressource renvoyée
+    206 Partial Content → Réponse partielle (suite à un Range request)
+  3xx → Redirection
+    301 Moved Permanently → Ressource déplacée définitivement
+    304 Not Modified   → La ressource n'a pas changé (suite à If-Modified-Since)
+  4xx → Erreur CLIENT
+    400 Bad Request    → Requête mal formée
+    401 Unauthorized   → Authentification requise
+    403 Forbidden      → Accès refusé
+    404 Not Found      → Ressource introuvable
+  5xx → Erreur SERVEUR
+    500 Internal Server Error → Erreur côté serveur
+
+─────────────────────────────────
+ 5. Méthodes HTTP (verbes)
+─────────────────────────────────
+
+  GET :
+    Demande une ressource au serveur. C'est la méthode la plus utilisée.
+    La ressource est renvoyée dans le corps de la réponse.
+    Ex: GET / HTTP/1.1 → demande la page d'accueil
+    Ex: GET /image.png HTTP/1.1 → demande un fichier image
+
+  HEAD :
+    Comme GET, mais le serveur renvoie UNIQUEMENT les en-têtes, sans le corps.
+    Utile pour connaître la taille, le type et la date de modification d'une ressource
+    sans la télécharger complètement.
+    Réponse : mêmes headers que GET (Content-Length, Content-Type...) mais pas de body.
+
+  OPTIONS :
+    Demande au serveur quelles méthodes HTTP sont supportées pour une ressource donnée.
+    La réponse contient un header "Allow: GET, POST, HEAD, OPTIONS" (liste des méthodes).
+    Utilisé notamment en CORS (Cross-Origin Resource Sharing).
+
+  POST :
+    Envoie des données au serveur (ex: formulaire, upload).
+    Les données sont dans le corps de la requête.
+
+  PUT :
+    Envoie ou remplace une ressource sur le serveur.
+
+  DELETE :
+    Supprime une ressource sur le serveur.
+
+─────────────────────────────────
+ 6. En-têtes HTTP importants
+─────────────────────────────────
+
+En-têtes de REQUÊTE :
+
+  Host: www.example.com
+    Obligatoire en HTTP/1.1. Indique le nom de domaine du serveur.
+    Permet à un serveur d'héberger plusieurs sites sur la même IP (virtual hosting).
+
+  Connection: close
+    Indique au serveur de fermer la connexion TCP après l'envoi de la réponse.
+    Connection: keep-alive → Maintenir la connexion ouverte pour plusieurs requêtes.
+
+  Range: bytes=500-1000
+    Demande une partie seulement de la ressource (de l'octet 500 à l'octet 1000).
+    Utilisé pour reprendre un téléchargement interrompu ou le téléchargement en parallèle.
+    Le serveur répond avec le code 206 Partial Content.
+    L'en-tête Content-Range de la réponse indique quelle partie est renvoyée.
+
+  If-Modified-Since: Mon, 07 Jun 2005 00:26:52 GMT
+    Demande la ressource UNIQUEMENT si elle a été modifiée APRÈS la date indiquée.
+    Si non modifiée → serveur répond 304 Not Modified (sans corps, économie de bande passante).
+    Si modifiée → serveur répond 200 OK avec la ressource.
+    Utilisé pour le cache web.
+
+En-têtes de RÉPONSE :
+
+  Content-Length: 20757
+    Taille du corps de la réponse en octets.
+
+  Content-Type: text/html
+    Type MIME du contenu (text/html, image/png, application/pdf, etc.).
+
+  Accept-Ranges: bytes
+    Indique que le serveur supporte les requêtes partielles (Range requests).
+
+  Content-Range: bytes 500-1000/20757
+    Indique quelle portion de la ressource est envoyée / taille totale.
+
+  Set-Cookie: nom=valeur
+    Demande au navigateur de stocker un cookie.
+
+─────────────────────────────────
+ 7. HTTP/1.0 vs HTTP/1.1
+─────────────────────────────────
+
+  HTTP/1.0 :
+    - Une connexion TCP par requête/réponse → très inefficace.
+    - La connexion est fermée après chaque réponse.
+
+  HTTP/1.1 :
+    - Connexions persistantes (keep-alive) → une seule connexion TCP pour plusieurs requêtes.
+    - L'en-tête "Host:" devient obligatoire.
+    - Support des requêtes partielles (Range).
+    - Pipelining : envoyer plusieurs requêtes sans attendre les réponses.
+
+─────────────────────────────────
+ 8. Téléchargement de fichiers binaires en HTTP
+─────────────────────────────────
+
+Problème :
+  La réponse HTTP contient d'abord les en-têtes, puis une ligne vide (\r\n\r\n),
+  puis le contenu du fichier. Pour sauvegarder uniquement le fichier (sans les en-têtes),
+  il faut trouver la séquence \r\n\r\n et ignorer tout ce qui la précède.
+
+En Python :
+  rec = rec[rec.find(b"\r\n\r\n") + 4::]
+  → Coupe la réponse juste après les en-têtes pour ne garder que le contenu.
+
+Ensuite, on écrit le contenu dans un fichier en mode binaire ("wb").
+
+─────────────────────────────────
+ 9. La bibliothèque requests Python
+─────────────────────────────────
+
+Définition :
+  "requests" est une bibliothèque Python tierce (pas standard) qui simplifie
+  les requêtes HTTP en cachant la gestion des sockets, des en-têtes, etc.
+
+Installation :
+  pip install requests
+
+Exemple :
+  import requests
+  reponse = requests.get("http://www.example.com/")
+  print(reponse.content)   → Corps de la réponse en bytes
+  print(reponse.text)      → Corps en texte décodé
+  print(reponse.headers)   → Dictionnaire des en-têtes de réponse
+  print(reponse.status_code) → Code HTTP (200, 404, etc.)
+
+Comparaison avec les sockets bruts :
+  Sockets → Bas niveau, on voit tout, utile pour apprendre.
+  requests → Haut niveau, simple à utiliser, utilisé dans les vrais projets.
+
+
+════════════════════════════════════════════════════════
+ PARTIE V — HTTPS (HTTP Secure)
+════════════════════════════════════════════════════════
+
+─────────────────────────────────
+ 1. Définition
+─────────────────────────────────
+
+Définition :
+  HTTPS = HTTP + chiffrement TLS/SSL.
+  Tout ce qui est HTTP s'applique à HTTPS, mais le contenu est chiffré.
+  Port : 443 (au lieu de 80 pour HTTP).
+
+─────────────────────────────────
+ 2. Fonctionnement du chiffrement TLS
+─────────────────────────────────
+
+Étapes de l'établissement d'une connexion HTTPS :
+
+  Étape 1 — Three-Way Handshake TCP (SYN, SYN-ACK, ACK)
+    → Établissement de la connexion TCP normale.
+
+  Étape 2 — Handshake TLS (échange de certificats)
+    a) Client Hello : le client annonce les algorithmes de chiffrement qu'il supporte.
+    b) Server Hello : le serveur choisit un algorithme et envoie son certificat numérique.
+    c) Le certificat contient la CLÉ PUBLIQUE du serveur (algorithme RSA ou similaire).
+    d) Le client vérifie la validité du certificat (signé par une autorité de certification).
+    e) Échange d'une clé de session symétrique (AES) via la clé publique du serveur.
+
+  Étape 3 — Communication chiffrée
+    → Toutes les requêtes HTTP et réponses sont chiffrées avec la clé AES partagée.
+    → Dans Wireshark, on voit "TLS Application Data" au lieu du contenu HTTP en clair.
+
+Résumé des algorithmes :
+  RSA / ECDSA → Algorithmes asymétriques pour l'échange initial de clés.
+  AES         → Algorithme symétrique pour le chiffrement de la session.
+
+─────────────────────────────────
+ 3. Certificat numérique
+─────────────────────────────────
+
+Définition :
+  Un certificat numérique est un document électronique qui :
+  - Certifie l'identité du serveur (nom de domaine).
+  - Contient la clé publique du serveur.
+  - Est signé par une Autorité de Certification (CA) de confiance (ex: DigiCert, Let's Encrypt).
+
+Le navigateur fait confiance à la liste des CA connues. Si le certificat est signé par
+une CA reconnue, la connexion est considérée sûre (cadenas vert dans le navigateur).
+
+─────────────────────────────────
+ 4. HTTPS en Python
+─────────────────────────────────
+
+On utilise le module ssl de la bibliothèque standard :
+
+  import socket
+  import ssl
+
+  connexionTCP = socket.socket()
+  connexionTCP.connect(("www.example.com", 443))
+
+  # "Envelopper" le socket TCP dans une couche SSL/TLS
+  connexionHTTPS = ssl.create_default_context().wrap_socket(
+      connexionTCP,
+      server_hostname="www.example.com"
+  )
+
+  # Ensuite on envoie des requêtes HTTP normales, tout est chiffré automatiquement
+  connexionHTTPS.send(b"GET / HTTP/1.1\r\nHost: www.example.com\r\n\r\n")
+
+ssl.create_default_context() → Crée un contexte SSL avec les paramètres sécurisés par défaut.
+wrap_socket()               → Enveloppe le socket TCP dans TLS.
+
+─────────────────────────────────
+ 5. Différence HTTP vs HTTPS dans Wireshark
+─────────────────────────────────
+
+HTTP  : Le contenu des requêtes et réponses est lisible en clair dans Wireshark.
+HTTPS : Wireshark voit les paquets TCP et TLS, mais le contenu est chiffré et illisible.
+        On voit seulement "TLS Application Data" sans pouvoir lire le HTML ou les cookies.
+
+
+════════════════════════════════════════════════════════
+ PARTIE VI — COOKIES HTTP
+════════════════════════════════════════════════════════
+
+─────────────────────────────────
+ 1. Problème résolu par les cookies
+─────────────────────────────────
+
+HTTP est un protocole SANS ÉTAT (stateless) :
+  Chaque requête HTTP est indépendante. Le serveur ne se souvient pas des requêtes
+  précédentes. Il ne sait pas si c'est la même personne qui revient.
+
+Problème : Comment maintenir une session utilisateur (panier d'achat, connexion, préférences) ?
+Réponse : Les cookies.
+
+─────────────────────────────────
+ 2. Définition
+─────────────────────────────────
+
+Un cookie est une petite quantité de données (texte) qu'un serveur demande au navigateur
+de stocker et de renvoyer à chaque requête ultérieure vers ce même serveur.
+
+─────────────────────────────────
+ 3. Fonctionnement
+─────────────────────────────────
+
+  1. Première visite :
+     Le client envoie : GET /page HTTP/1.1
+     Le serveur répond avec :
+       HTTP/1.1 200 OK
+       Set-Cookie: session_id=abc123; Expires=...; Path=/
+       ...
+
+  2. Visites suivantes :
+     Le navigateur renvoie automatiquement le cookie :
+       GET /page HTTP/1.1
+       Cookie: session_id=abc123
+       ...
+
+  3. Le serveur identifie l'utilisateur grâce au cookie.
+
+─────────────────────────────────
+ 4. En-têtes HTTP des cookies
+─────────────────────────────────
+
+  Set-Cookie (SERVEUR → CLIENT) :
+    Demande au navigateur de stocker un cookie.
+    Format : Set-Cookie: nom=valeur; attributs
+    Attributs courants :
+      Expires=date  → Date d'expiration (sinon cookie de session = détruit à la fermeture du navigateur)
+      Path=/        → Sur quel chemin le cookie s'applique
+      Domain=...    → Domaine auquel le cookie appartient
+      Secure        → Envoyer uniquement via HTTPS
+      HttpOnly      → Inaccessible au JavaScript (protection contre XSS)
+
+  Cookie (CLIENT → SERVEUR) :
+    Envoie les cookies stockés au serveur.
+    Format : Cookie: nom=valeur; autrenomvaleur
+
+─────────────────────────────────
+ 5. Types de cookies
+─────────────────────────────────
+
+  Cookie de session :
+    Pas de date d'expiration. Détruit quand le navigateur est fermé.
+    Utilisé pour maintenir une session de connexion.
+
+  Cookie persistant :
+    A une date d'expiration. Stocké sur le disque.
+    Utilisé pour "se souvenir" de l'utilisateur entre les sessions (ex: "Rester connecté").
+
+  Cookie tiers (Third-party cookie) :
+    Appartient à un domaine différent de celui de la page visitée.
+    Utilisé par les régies publicitaires pour tracer les utilisateurs entre les sites.
+    De plus en plus bloqué par les navigateurs modernes.
+
+─────────────────────────────────
+ 6. Utilité des cookies
+─────────────────────────────────
+
+  - Authentification et sessions (rester connecté)
+  - Personnalisation (langue, thème)
+  - Panier d'achat en e-commerce
+  - Suivi et publicité (tracking)
+  - Analyse d'audience (Google Analytics, etc.)
+
+─────────────────────────────────
+ 7. Cookies et sécurité
+─────────────────────────────────
+
+  Session Hijacking :
+    Si un attaquant vole le cookie de session (ex: sur un réseau non chiffré HTTP),
+    il peut usurper l'identité de la victime sans connaître son mot de passe.
+    → D'où l'importance de HTTPS pour chiffrer les cookies en transit.
+
+  XSS (Cross-Site Scripting) :
+    Un attaquant injecte du JavaScript dans une page pour voler les cookies.
+    → L'attribut HttpOnly protège contre ça (le JS ne peut pas lire le cookie).
+
+  CSRF (Cross-Site Request Forgery) :
+    Un site malveillant fait envoyer une requête à un autre site en utilisant
+    les cookies de l'utilisateur à son insu.
+
+
+════════════════════════════════════════════════════════
+ RÉCAPITULATIF DES PROTOCOLES
+════════════════════════════════════════════════════════
+
+  FTP    : Transfert de fichiers, 2 connexions TCP (port 21 contrôle, 20 données)
+  TFTP   : Transfert simplifié, UDP, pas d'auth (utilisé en PXE boot)
+  DNS    : Résolution de noms (domaine → IP), UDP port 53
+  HTTP   : Échange de ressources Web, TCP port 80, sans état
+  HTTPS  : HTTP chiffré avec TLS, TCP port 443
+  Cookies: Mécanisme pour donner un état à HTTP (sessions, préférences)
+
+
+════════════════════════════════════════════════════════
+ RÉCAPITULATIF DES FILTRES WIRESHARK
+════════════════════════════════════════════════════════
+
+  FTP commandes              : tcp.port==21
+  FTP données (mode actif)   : tcp.port==20
+  FTP données (général)      : ftp-data
+  DNS requête pour un domaine: dns.qry.name == "google.com"
+  HTTP méthode GET           : http.request.method==GET
+  HTTP sur une IP            : ip.addr == X.X.X.X
+  TLS/HTTPS                  : tls
+
+
+════════════════════════════════════════════════════════
+ RÉCAPITULATIF DES CODES DE RÉPONSE HTTP
+════════════════════════════════════════════════════════
+
+  200 OK                  → Succès, ressource renvoyée
+  206 Partial Content     → Succès partiel (Range request)
+  304 Not Modified        → Non modifié depuis If-Modified-Since
+  400 Bad Request         → Requête mal formée
+  401 Unauthorized        → Authentification requise
+  403 Forbidden           → Accès refusé
+  404 Not Found           → Ressource introuvable
+  500 Internal Server Error → Erreur serveur
+
+
+════════════════════════════════════════════════════════
+ GLOSSAIRE RAPIDE
+════════════════════════════════════════════════════════
+
+  FTP    : File Transfer Protocol
+  TFTP   : Trivial File Transfer Protocol
+  DNS    : Domain Name System
+  HTTP   : HyperText Transfer Protocol
+  HTTPS  : HyperText Transfer Protocol Secure
+  TLS    : Transport Layer Security (successeur de SSL)
+  SSL    : Secure Sockets Layer (ancienne version de TLS)
+  RSA    : Algorithme de chiffrement asymétrique
+  AES    : Algorithme de chiffrement symétrique
+  CA     : Certificate Authority (Autorité de Certification)
+  CRLF   : Carriage Return + Line Feed (\r\n) — séparateur de lignes HTTP/FTP
+  MIME   : Multipurpose Internet Mail Extensions (type de contenu : text/html, image/png...)
+  URL    : Uniform Resource Locator (adresse d'une ressource web)
+  MX     : Mail eXchanger (enregistrement DNS des serveurs mail)
+  CNAME  : Canonical Name (alias DNS)
+  PTR    : Pointer record (DNS inverse : IP → nom de domaine)
+  Cookie : Donnée stockée par le navigateur, renvoyée au serveur à chaque requête
+  Session: Période d'interaction identifiée entre client et serveur grâce aux cookies
+
+========================================================
+  Fin du cours
+========================================================
