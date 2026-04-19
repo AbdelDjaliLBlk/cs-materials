@@ -1,0 +1,103 @@
+=========================================================
+       RÉSUMÉ - TP 04 : ANALYSE LEXICALE
+       Module : Compilation | ING3 Informatique
+       Université Aboubekr BELKAID - 2025/2026
+=========================================================
+
+---------------------------------------------------------
+C'EST QUOI CE TP ?
+---------------------------------------------------------
+Ce TP porte sur l'ANALYSE LEXICALE, qui est la première
+étape d'un compilateur. Tu dois programmer en C un
+analyseur lexical pour un "langage d'affectation simple"
+(un mini-langage avec des variables, des nombres, et
+des opérations arithmétiques).
+
+---------------------------------------------------------
+QU'EST-CE QU'UN ANALYSEUR LEXICAL ?
+---------------------------------------------------------
+C'est un programme qui lit un code source caractère par
+caractère et le découpe en "unités lexicales" (tokens),
+comme :
+  - des identifiants (variables : x, y, somme...)
+  - des nombres entiers (2, 34, 100...)
+  - des opérateurs (+, -, *, /)
+  - des symboles (=, ;, (, ))
+
+---------------------------------------------------------
+CE QUE TU DOIS FAIRE (étapes)
+---------------------------------------------------------
+
+ÉTAPE 1 — Comprendre le langage à analyser
+  Le langage reconnaît ces éléments :
+  • Identifiants  : lettres, suivies de lettres/chiffres/underscore
+  • Nombres       : entiers non signés (ex: 42)
+  • Opérateurs    : +  -  *  /
+  • Affectation   : =
+  • Parenthèses   : (  )
+  • Séparateur    : ;
+
+ÉTAPE 2 — Implémenter l'automate (AEFD)
+  L'automate global a 3 états principaux :
+  • Q0 : état initial (on attend un nouveau token)
+  • Q1 : état final → identifiant reconnu
+  • Q2 : état final → nombre entier reconnu
+  Les symboles simples (=, +, -, *, /, (, ), ;) sont
+  reconnus directement depuis Q0.
+
+ÉTAPE 3 — Coder les unités lexicales (tokens)
+  Chaque token a un code numérique :
+  IDENTIFIANT_UL          → 260
+  NOMBRE_UL               → 261
+  PLUS (+)                → 262
+  MINUS (-)               → 263
+  MULTIPLY (*)            → 264
+  DIVIDE (/)              → 265
+  PARENTHESE_OUVRANTE     → 266
+  PARENTHESE_FERMANTE     → 267
+  SYMBOLE_AFFECTATION (=) → 268
+  SEPARATEUR_PT_VIRGULE   → 269
+  FIN DE SUITE (#)        → 999
+  ERREUR                  → -9
+
+ÉTAPE 4 — Créer la structure UL en C
+  typedef struct Unite_Lexicale {
+      char Lexeme[20];
+      int  Code;
+      int  Ligne;
+      struct Unite_Lexicale* Suivant;
+  } UL;
+  → C'est une liste chaînée des tokens trouvés.
+
+ÉTAPE 5 — Écrire l'algorithme principal
+  a) Lire le code source depuis un fichier texte
+  b) Parcourir caractère par caractère via l'automate
+  c) Quand un état final est atteint + séparateur lu
+     → créer un UL et l'ajouter à la liste chaînée
+  d) En cas d'erreur lexicale → afficher position/ligne
+     et arrêter le traitement
+  e) Si tout va bien → ajouter "#" (code 999) à la fin
+
+---------------------------------------------------------
+EXEMPLE D'EXÉCUTION
+---------------------------------------------------------
+
+Entrée valide :
+  a=(((2+3)*5)-4);
+  → Produit une liste de tokens : a, =, (, (, (, 2, +,
+    3, ), *, 5, ), -, 4, ), ;, #
+
+Entrée avec erreur :
+  a=((( ! 2+3)*5)-4);
+  → S'arrête sur '!' → "Erreur lexicale '!' ligne 1"
+
+---------------------------------------------------------
+EN RÉSUMÉ : TON TRAVAIL
+---------------------------------------------------------
+  ✔ Lire un fichier source
+  ✔ Implémenter l'automate AEFD en C
+  ✔ Construire une liste chaînée de tokens
+  ✔ Gérer les erreurs lexicales
+  ✔ Afficher la liste des UL ou le message d'erreur
+
+=========================================================
