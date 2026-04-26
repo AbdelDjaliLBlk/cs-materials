@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Recherche AJAX avec XMLHttpRequest</title>
+</head>
+<body>
+  <h1>Recherche d'utilisateurs</h1>
+  <input id="search" placeholder="Tapez un nom..." />
+  <div id="results"></div>
+
+  <script>
+    const searchInput = document.getElementById('search');
+    const resultsDiv = document.getElementById('results');
+
+    searchInput.addEventListener('keyup', () => {
+      const query = searchInput.value.trim();
+
+      if (query === '') {
+        resultsDiv.innerHTML = '';
+        return;
+      }
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', 'search.php?query=' + encodeURIComponent(query), true);
+
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4 && xhr.status === 200) {
+          resultsDiv.innerHTML = xhr.responseText;
+        }
+      };
+
+      xhr.send();
+    });
+  </script>
+</body>
+</html>

@@ -2,13 +2,13 @@ import socket
 import ssl
 import time
 def RecevoirLaReponseServeur(ConnexionSecurise, Tag_Commande):
-    Reponse_recu=ConnexionSecurise.recv(1024).decode("unicode_escape")
+    Reponse_recu=ConnexionSecurise.recv(1024).decode("utf-8", errors="replace")
     Delimiteur_De_Fin_De_Reponse=Tag_Commande+" "
     while True:
         # lire la reponse jusqu'a atteindre la sequence de caratere Delimiteur_De_Fin_De_Reponse (TAG de la commande)
         if(Delimiteur_De_Fin_De_Reponse in Reponse_recu):
             break 
-        Reponse_recu+=ConnexionSecurise.recv(1024).decode("unicode_escape")
+        Reponse_recu+=ConnexionSecurise.recv(1024).decode("utf-8", errors="replace")
     return Reponse_recu
 
 NomDomaineDuServeurIMAP="imap.gmail.com"
@@ -18,7 +18,7 @@ ConnexionAuServeur.connect((NomDomaineDuServeurIMAP,993))
 ConnexionSecurise=ssl.create_default_context().wrap_socket(ConnexionAuServeur,server_hostname=NomDomaineDuServeurIMAP)
 Commande=""
 # recevoir le message de connexion
-print( ConnexionSecurise.recv(2048).decode("unicode_escape"))
+print( ConnexionSecurise.recv(2048).decode("utf-8", errors="replace"))
 TAG_Commande=""
 while True:
     # lire la commande

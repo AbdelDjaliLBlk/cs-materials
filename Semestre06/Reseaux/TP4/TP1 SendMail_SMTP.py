@@ -5,11 +5,11 @@ from email.header    import Header
 smtp_host = 'smtp.gmail.com'
 
 # donnees d'authentification du transmetteur (adresse mail et mot de passe)
-AdresseMailExpediteur="MasterInfo.tlemcen.MAIL@gmail.com"
-MotDePasse="CodingMonk?L7*5"
+AdresseMailExpediteur="bambooraphael@gmail.com"
+MotDePasse="vnibhawtgxhaxelk"
 
 # adresse mail recepteur
-AdresseMailRecepteur="VOTRE.ADRESSE.EMAIL.SVP@gmail.com"
+AdresseMailRecepteur="jalilbelkasmi4@gmail.com"
 
 # Mail formate avec le format RFC822 ( voir le cours SMTP)
 # contenu text
@@ -31,7 +31,7 @@ try:
     # envoie des informations d'authentification de l'expediteur (AdresseMailExpediteur,MotDePasse )
     Objet_de_connexion_avec_ServeurSMTP.login(AdresseMailExpediteur,MotDePasse )
     # envoie du mail
-    Objet_de_connexion_avec_ServeurSMTP.sendmail("MasterInfo.tlemcen.MAIL@gmail.com", AdresseMailRecepteur , Mail_FormatRFC822.as_string())
+    Objet_de_connexion_avec_ServeurSMTP.sendmail("bambooraphael@gmail.com", AdresseMailRecepteur , Mail_FormatRFC822.as_string())
 finally:
     #envoie de la commande QUIT
     Objet_de_connexion_avec_ServeurSMTP.quit()

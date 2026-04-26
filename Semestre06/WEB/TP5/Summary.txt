@@ -1,0 +1,316 @@
+====================================================
+RÉSUMÉ + RÉPONSES - TP N°5 : Programmation Web (2025/2026)
+Authentification sécurisée avec PHP/MySQL et AJAX
+====================================================
+
+Ce TP couvre 4 exercices portant sur la sécurité web, l'AJAX et Node.js/Express.
+
+====================================================
+EXERCICE 1 : Authentification sécurisée avec hachage
+====================================================
+
+CONTEXTE :
+- Création d'une base de données MySQL "badr" et d'une table "banque"
+  (champs : id, nom, solde, passwd haché).
+- Insertion d'utilisateurs via insertion.php avec password_hash().
+
+----------------------------------------------------
+Q1 : Expliquer password_hash('123', PASSWORD_DEFAULT). Le rôle des paramètres ?
+----------------------------------------------------
+La fonction password_hash() prend deux paramètres :
+  - '123'             : le mot de passe en clair à hacher.
+  - PASSWORD_DEFAULT  : la constante qui indique l'algorithme à utiliser.
+                        Elle pointe vers l'algorithme recommandé par PHP
+                        (actuellement bcrypt). Si PHP met à jour sa
+                        recommandation dans le futur, PASSWORD_DEFAULT
+                        pointera automatiquement vers le nouvel algorithme.
+
+La fonction retourne une chaîne de caractères contenant :
+  - l'algorithme utilisé,
+  - un "salt" généré aléatoirement,
+  - le hash résultant.
+Exemple de résultat : $2y$10$abcdefghijk... (format bcrypt)
+
+----------------------------------------------------
+Q2 : Quel est l'algorithme utilisé par PHP pour le hachage ?
+----------------------------------------------------
+PHP utilise l'algorithme BCRYPT (aussi appelé Blowfish).
+Il est conçu spécifiquement pour le hachage de mots de passe :
+  - Il intègre un "salt" automatique pour éviter les attaques par tables
+    arc-en-ciel (rainbow tables).
+  - Il est intentionnellement lent (paramètre "cost", par défaut 10),
+    ce qui le rend résistant aux attaques par force brute.
+  - Chaque appel produit un hash différent même pour le même mot de passe.
+
+----------------------------------------------------
+Modification de auth_verify.php pour les mots de passe hachés :
+----------------------------------------------------
+Remplacer la comparaison directe des mots de passe par password_verify() :
+
+  if (password_verify($passwd_saisi, $row['passwd'])) {
+      echo "Authentification réussie !";
+  } else {
+      echo "Mot de passe incorrect.";
+  }
+
+password_verify($password, $hash) compare le mot de passe en clair avec
+le hash stocké en base. Elle retourne true si correspondance, false sinon.
+
+
+====================================================
+EXERCICE 2 : Analyse d'une faille SQL (Injection SQL)
+====================================================
+
+CONTEXTE :
+- cible.php construit une requête SQL directement avec les entrées
+  utilisateur sans aucune protection.
+- Saisir ' OR 1=1 # dans le champ Nom contourne l'authentification.
+
+La requête devient :
+  SELECT nom, solde FROM banquebis WHERE nom = '' OR 1=1 #' AND passwd = '...'
+
+Le # commente tout ce qui suit, et 1=1 est toujours vrai.
+
+----------------------------------------------------
+Q1 : Pourquoi l'authentification est cassée ?
+----------------------------------------------------
+Parce que la requête SQL est construite par concaténation directe avec
+les données saisies par l'utilisateur. Il est alors possible de modifier
+la logique de la requête en injectant du code SQL dans les champs du
+formulaire. La condition WHERE devient toujours vraie (1=1), donc tous
+les utilisateurs correspondent et l'accès est accordé sans vérification
+réelle du mot de passe.
+
+----------------------------------------------------
+Q2 : Comment appelle-t-on cette attaque ?
+----------------------------------------------------
+Cette attaque s'appelle une INJECTION SQL (SQL Injection).
+C'est l'une des failles les plus connues et les plus dangereuses du web,
+classée en tête de l'OWASP Top 10.
+
+----------------------------------------------------
+Q3 : Que peut faire un attaquant avec cette faille ?
+----------------------------------------------------
+Un attaquant peut :
+  - Contourner l'authentification sans connaître aucun mot de passe.
+  - Lire toutes les données de la base (noms, soldes, mots de passe...).
+  - Modifier ou supprimer des données (UPDATE, DELETE).
+  - Dans certains cas, exécuter des commandes système sur le serveur.
+  - Exfiltrer des données sensibles d'autres tables via UNION SELECT.
+
+----------------------------------------------------
+Q4 : Pourquoi seul le premier utilisateur est affiché ?
+----------------------------------------------------
+Parce que le code PHP utilise fetch_assoc() qui ne récupère qu'une seule
+ligne à la fois. Même si la requête retourne plusieurs lignes (tous les
+utilisateurs), seule la première ligne du résultat est affichée.
+Pour afficher tous les résultats, il faudrait utiliser une boucle while.
+
+----------------------------------------------------
+Q5 : Les requêtes préparées empêchent-elles cette attaque ? Justifiez.
+----------------------------------------------------
+OUI. Les requêtes préparées (prepared statements) empêchent totalement
+l'injection SQL. Voici pourquoi :
+
+Avec une requête préparée :
+  $stmt = $conn->prepare("SELECT nom, solde FROM banquebis WHERE nom = ? AND passwd = ?");
+  $stmt->bind_param("ss", $nom, $passwd);
+  $stmt->execute();
+
+Fonctionnement :
+  1. La structure de la requête SQL est envoyée au serveur MySQL séparément
+     des données utilisateur.
+  2. MySQL compile et analyse la requête avant de recevoir les paramètres.
+  3. Les paramètres sont ensuite transmis comme de simples données,
+     jamais interprétés comme du code SQL.
+
+Ainsi, si l'utilisateur saisit ' OR 1=1 #, cette chaîne est traitée
+littéralement comme une valeur à chercher dans le champ "nom", et non
+comme du code SQL. Aucun utilisateur n'ayant ce nom exact, la requête
+ne retourne aucun résultat et l'accès est refusé.
+
+
+====================================================
+EXERCICE 3 : Recherche AJAX (XMLHttpRequest et Fetch API)
+====================================================
+
+----------------------------------------------------
+Q1 : Expliquer (strpos(strtolower($user), $query) !== false)
+----------------------------------------------------
+Cette instruction vérifie si la chaîne $query apparaît quelque part
+dans le nom $user (recherche partielle, insensible à la casse).
+
+Décomposition :
+  - strtolower($user)          : convertit le nom en minuscules.
+  - strpos(..., $query)        : cherche la position de $query dans $user.
+                                 Retourne un entier si trouvé, false sinon.
+  - !== false                  : vérifie que la position a bien été trouvée
+                                 (on utilise !== et non != car strpos peut
+                                 retourner 0 si la correspondance est en
+                                 début de chaîne, et 0 == false en PHP).
+
+Exemple : $user = "Omar", $query = "om"
+  → strtolower("Omar") = "omar"
+  → strpos("omar", "om") = 0  →  0 !== false  →  true  →  affiché.
+
+----------------------------------------------------
+Q2a : Expliquer le paramètre 'keyup' dans addEventListener
+----------------------------------------------------
+'keyup' est un événement du navigateur déclenché chaque fois que
+l'utilisateur relâche une touche du clavier dans le champ de recherche.
+
+En utilisant addEventListener('keyup', ...), le script AJAX est déclenché
+automatiquement à chaque frappe, sans que l'utilisateur ait besoin de
+cliquer sur un bouton. Cela permet une recherche en temps réel.
+
+----------------------------------------------------
+Q2b : Expliquer encodeURIComponent()
+----------------------------------------------------
+encodeURIComponent() est une fonction JavaScript qui encode une chaîne
+de caractères pour qu'elle soit utilisable de manière sûre dans une URL.
+
+Elle transforme les caractères spéciaux en leur équivalent encodé :
+  - espace    → %20
+  - &         → %26
+  - =         → %3D
+  - caractères accentués (é, à...) → séquences %XX
+
+Sans cet encodage, des caractères spéciaux dans la saisie pourraient
+casser la structure de l'URL ou être mal interprétés par le serveur.
+
+Exemple :
+  encodeURIComponent("Ali Ben") → "Ali%20Ben"
+  → URL : search.php?query=Ali%20Ben  (valide)
+  Sans encodage : search.php?query=Ali Ben  (invalide, espace brut)
+
+----------------------------------------------------
+Q3 : Code de indexXMLFetch.html (Fetch API à la place de XMLHttpRequest)
+----------------------------------------------------
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <title>Recherche AJAX avec Fetch</title>
+</head>
+<body>
+    <input type="text" id="recherche" placeholder="Rechercher un utilisateur..." />
+    <div id="resultat"></div>
+
+    <script>
+        document.getElementById('recherche').addEventListener('keyup', function() {
+            const query = encodeURIComponent(this.value);
+
+            fetch('search.php?query=' + query)
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('resultat').innerHTML = data;
+                })
+                .catch(error => {
+                    document.getElementById('resultat').innerHTML = 'Erreur : ' + error;
+                });
+        });
+    </script>
+</body>
+</html>
+
+----------------------------------------------------
+Q4 : Modifier search.php pour n'afficher que les noms commençant par la saisie
+----------------------------------------------------
+Remplacer strpos (recherche partielle) par une vérification du début :
+
+  // Ancien code (recherche partielle) :
+  if (strpos(strtolower($user), $query) !== false)
+
+  // Nouveau code (commence par) :
+  if (strpos(strtolower($user), strtolower($query)) === 0)
+
+La condition === 0 vérifie que la correspondance commence exactement
+à la position 0, c'est-à-dire au début du nom.
+
+Exemple : $query = "om"
+  - "Omar"  → strpos("omar", "om") = 0  →  affiché ✓
+  - "Nadia" → strpos("nadia", "om") = false →  non affiché ✓
+  - "Thomas"→ strpos("thomas", "om") = 2  →  non affiché ✓
+
+
+====================================================
+EXERCICE 4 : Application Node.js avec Express.js et AJAX
+====================================================
+
+----------------------------------------------------
+Q1 : Expliquer l'intérêt du Framework Express.js
+----------------------------------------------------
+Express.js est un framework minimaliste pour Node.js qui simplifie
+la création de serveurs web et d'APIs. Sans Express, on doit gérer
+manuellement les URLs, les méthodes HTTP, les réponses, etc.
+
+Avantages d'Express :
+  - Routage simplifié : app.get('/url', ...) au lieu de parser req.url manuellement.
+  - Gestion des fichiers statiques : app.use(express.static(...)).
+  - Middleware : ajout facile de fonctionnalités (authentification, logs, parsing JSON...).
+  - Code plus lisible, maintenable et structuré.
+  - Large écosystème de plugins npm compatibles.
+
+----------------------------------------------------
+Q2 : Modification pour envoyer une requête AJAX depuis un formulaire
+----------------------------------------------------
+
+Fichier ajax_form.html :
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <title>AJAX Formulaire avec Express</title>
+    <script>
+        async function calculer(event) {
+            event.preventDefault(); // Empêche le rechargement de la page
+            const n = document.getElementById('nombre').value;
+
+            let response = await fetch('/calcule?n=' + encodeURIComponent(n));
+            let data = await response.text();
+            document.getElementById('resultat').innerHTML = data;
+        }
+    </script>
+</head>
+<body>
+    <h1>Calculateur de carré</h1>
+    <input type="number" id="nombre" placeholder="Entrez un nombre" />
+    <button onclick="calculer(event)">Calculer</button>
+    <p id="resultat">Le résultat apparaîtra ici...</p>
+</body>
+</html>
+
+Fichier serverexpress.js (inchangé, déjà fonctionnel) :
+
+const express = require('express');
+const app = express();
+app.use(express.static(__dirname));
+
+app.get('/calcule', (req, res) => {
+    const n = req.query.n;
+    const resultat = n * n;
+    setTimeout(() => {
+        res.send(`Le serveur a reçu n=${n}. Voici votre résultat : ${resultat}.`);
+    }, 3000);
+});
+
+app.listen(5000, () => {
+    console.log('Serveur démarré sur http://localhost:5000');
+});
+
+Fonctionnement :
+  1. L'utilisateur saisit un nombre dans le formulaire et clique sur le bouton.
+  2. fetch() envoie une requête GET asynchrone à /calcule?n=<valeur>.
+  3. Express reçoit la requête, calcule le carré, attend 3 secondes
+     (setTimeout) et renvoie le résultat.
+  4. Le résultat s'affiche dynamiquement dans la page sans rechargement.
+
+====================================================
+TECHNOLOGIES ABORDÉES
+====================================================
+- PHP / MySQL (requêtes préparées, password_hash, password_verify)
+- Sécurité web (injection SQL, hachage des mots de passe avec bcrypt)
+- AJAX (XMLHttpRequest, Fetch API)
+- Node.js / Express.js
+- HTML / JavaScript asynchrone (async/await, fetch, addEventListener)
+====================================================
