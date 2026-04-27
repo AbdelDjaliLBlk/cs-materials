@@ -1,0 +1,31 @@
+/* Style global de la page */
+        body {
+            font-family: 'Arial', sans-serif;
+        }
+/* Conteneur du tableau */
+        table {
+            border-collapse: collapse;
+            margin: 20px auto;
+            border: 1px solid #ddd;
+        }
+/* En-têtes du tableau */
+        th {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+        }
+/* Cellules des données du tableau */
+        td {
+            padding: 10px;
+        }
+/* Centrer le formulaire */
+        form {
+            text-align: center;
+        }
+/* Bouton de soumission */
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+        }

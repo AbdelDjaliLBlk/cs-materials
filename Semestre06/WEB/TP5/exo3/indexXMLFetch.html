@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <title>Recherche AJAX avec Fetch</title>
+</head>
+<body>
+    <input type="text" id="recherche" placeholder="Rechercher un utilisateur..." />
+    <div id="resultat"></div>
+
+    <script>
+        document.getElementById('recherche').addEventListener('keyup', function() {
+            const query = encodeURIComponent(this.value);
+
+            fetch('search.php?query=' + query)
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('resultat').innerHTML = data;
+                })
+                .catch(error => {
+                    document.getElementById('resultat').innerHTML = 'Erreur : ' + error;
+                });
+        });
+    </script>
+</body>
+</html>

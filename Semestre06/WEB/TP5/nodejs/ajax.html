@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+ <meta charset="UTF-8">
+ <title>AJAX avec Node.js + Express</title>
+ <script>
+ async function calculer(event) {
+ event.preventDefault(); // empêche le rechargement de la page
+ const n = document.getElementById('nombre').value;
+ let response = await fetch('/calcule?n=' + encodeURIComponent(n));
+ let data = await response.text();
+ document.getElementById('monmessage').innerHTML = data;
+ }
+ </script>
+</head>
+<body>
+ <h1>Calculateyr de carre</h1>
+ <form onsubmit="calculer(event)">
+ <label>Entrez un nombre :</label>
+  <input type="number" id="nombre" required>
+ <button type="submit">Envoyer</button>
+ </form>
+ <p id="monmessage">Le résultat apparaîtra ici...</p>
+</body>
+</html>

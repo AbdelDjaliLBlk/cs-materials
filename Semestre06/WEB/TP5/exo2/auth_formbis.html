@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Authentification</title>
+    <link rel="stylesheet" href="style1.css"> 
+</head>
+<body>
+    <h1 style="text-align: center;">Authentification</h1>
+
+    <!-- ici la modification-->
+    <form action="cible.php" method="POST">
+        
+        <table>
+            <tr>
+                <th>Champs</th>
+                <th>Saisies</th>
+            </tr>
+
+            <tr>
+                <td><label>Nom :</label></td>
+                <td><input type="text" name="nom" required></td>
+            </tr>
+
+            <tr>
+                <td><label>Mot de passe :</label></td>
+                <td><input type="password" name="passwd" required></td>
+            </tr>
+        </table>
+
+        <button type="submit">Se connecter</button>
+    </form>
+</body>
+</html>
