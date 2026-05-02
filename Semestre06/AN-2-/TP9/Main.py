@@ -1,132 +1,103 @@
 # =================================
-# |  TP8 : Integration Numérique  |
+# |  TP9: Equation Differentielle |
 # |  Nom:    BELKASMI             |
 # |  Prénom: Abdeldjalil          |
 # |  ING3 - IA                    |
 # =================================
 
-from Rectangle import *
-from Trapeze import *
-from Simpson import *
+# ====================================
+# |           REMARQUE               |
+# |  La Fonction Peut Etre Change    |
+# |  Depuis le Fichier 'Fonction.py' |
+# ====================================
+
+from Euler import *
+from Euler_Mod import *
+from Taylor import *
+from Range_Kutta_4 import *
+from Point_Milieu import *
 
 def menu():
     print("+==========Menu:==========+")
-    print("| 1-Lire Les Données      |\n"
-          "| 2-Methode des Rectangles|\n"
-          "| 3-Methode des Trapezes  |\n"
-          "| 4-Methode Simpson       |\n"
+    print("| 1-Methode Euler         |\n"
+          "| 2-Methode Euler Modifie |\n"
+          "| 3-Methode Taylor        |\n"
+          "| 4-Methode Point Milieu  |\n"
+          "| 5-Methode RK4           |\n"
           "| 0-Quitter               |")  
     print("+=========================+")
-def menu_rect():
-    print("+========================+")
-    print("| 1- Rectangles a gauche |\n"
-          "| 2- Rectangle a droite  |\n"
-          "| 3- Rectangle au milieu |\n"
-          "| 4- Erreur Absolue      |\n"
-          "| 5 -Borne D'erreur      |\n"
-          "| 0- Retour              |")  
-    print("+=========================+")
-def submenu(Rec = False):
-    if Rec:            
-        print("+===================+")
-        print("|  1-Iterative      |\n"
-              "|  2-Recursive      |\n"
-              "|  0-Retour         |")  
-        print("+===================+")
-    else:
-        print("+===================+")
-        print("|  1-Iterative      |\n"
-            "|  2-Recursive      |\n"
-            "|  3-Erreur Absolue |\n"
-            "|  4-Borne D'erreur |\n"
-            "|  0-Retour         |")  
-        print("+==================+")
-
-# Les Données Sont declarés ici Mais peuvent etre changer dans le menu 
-# (Option 1)
- 
-# ===
-a = 1
-b = 2
-n = 4
-# ===
-
+def submenu():               
+    print("+===================+")
+    print("|  1-Iterative      |\n"
+          "|  2-Recursive      |\n"
+          "|  0-Retour         |")  
+    print("+===================+")
+    
 # --- Main ---
 if __name__ == "__main__":
+    print(" === Résolution d'équation différentielle ===")
     while True:
         menu()
-        option = int(input("Choisissez une méthode:"))
+        option = int(input("Votre Choix :"))
         if option == 1:
-            a = int(input("*   a = "))
-            b = int(input("**  b = "))
-            n = int(input("*** N = "))
+            while True:   
+                    submenu()
+                    suboption = int(input("Choisissez une option:"))
+                    if suboption == 1:
+                        print(" === Euler ===")  
+                        euler(f, 0, 1, 0.1, 10, y_exact=y_exact)
+                    elif suboption == 2:
+                        print(" === Euler Recursive===")
+                        euler_rec(f, 0, 1, 0.1, 10, y_exact=y_exact)
+                    else: break
+                
         elif option == 2:
-            while True:
-                menu_rect()
-                option_rect = int(input("//-->"))
-                if option_rect == 1:
-                    while True :
-                        submenu(True)
-                        suboption = int(input("Choisissez une option:"))
-                        if suboption == 1 :
-                            print(f"* Gauche : ∫f(x) dx = {rectangle_gauche_recursive(a,b,n):.4f}")
-                        elif suboption ==2:
-                            print(f"* Gauche Rec: ∫f(x) dx = {rectangle_gauche_recursive(a,b,n):.4f}")
-                        else: break
-                elif option_rect == 2:
-                    while True:
-                        submenu(True)
-                        suboption = int(input("Choisissez une option: "))
-                        if suboption == 1 :
-                            print(f"* Droite : ∫f(x) dx = {rectangle_gauche_recursive(a,b,n):.4f}")
-                        elif suboption ==2:
-                            print(f"* Droite Rec: ∫f(x) dx = {rectangle_gauche_recursive(a,b,n):.4f}")
-                        else: break
-                elif option_rect == 3:
-                    while True:
-                        submenu(True)
-                        suboption = int(input("Choisissez une option: "))
-                        if suboption == 1:
-                            print(f"* Milieu : ∫f(x) dx = {rectangle_gauche_recursive(a,b,n):.4f}")
-                        elif suboption ==2:
-                            print(f"* Milieu Rec: ∫f(x) dx = {rectangle_gauche_recursive(a,b,n):.4f}")
-                        else: break
-                elif option_rect ==4 :
-                    I_ex = float(input("Entrer I exacte:"))
-                    print(f"** |I - ∫f(x) dx| = ",erreur_absolue(I_ex,a,b,n))
-                elif option_rect == 5:
-                    print("*** Borne D'erreur = ",borne_erreur(a,b,n))
-                else : break       
+            while True:   
+                submenu()
+                suboption = int(input("Choisissez une option:"))
+                if suboption == 1 :
+                    print(" === Euler Modifie ===")
+                    euler_mod(f, 0, 1, 0.1, 10, y_exact=y_exact)
+                elif suboption ==2:
+                    print(" === Euler Modifie Rec ===")
+                    euler_mod_rec(f, 0, 1, 0.1, 10, y_exact=y_exact)
+                else: break
+            
         elif option == 3:
             while True:
                 submenu()
                 suboption = int(input("Choisissez une option: "))
                 if suboption == 1:
-                    print(f"* Trapeze: ∫f(x) dx = {trapeze(a,b,n):.4f}")
+                    print(" === Taylor ===")
+                    taylor(f, dfdx, dfdy, 0, 1, 0.1, 10, y_exact=y_exact)
                 elif suboption == 2:
-                    print(f"* Trapeze Rec: ∫f(x) dx = {trapeze(a,b,n):.4f}")
-                elif suboption == 3 :
-                    I_ex = float(input("Entrer I exacte:"))
-                    print(f"** |I - ∫f(x) dx| = ",erreur_absolue_trapeze(I_ex,a,b,n))
-                elif suboption == 4:
-                    print("*** Borne D'erreur = ",borne_erreur_trapeze(a,b,n))
+                    print(" === Taylor Recursive ===")
+                    taylor_rec(f, dfdx, dfdy, 0, 1, 0.1, 10, y_exact=y_exact)
                 else : break
-        
+
         elif option == 4:
             while True :
                 submenu()
                 suboption = int(input("Choisissez une option: "))
                 if suboption == 1:
-                    print(f"* Simpson : ∫f(x) dx = {simpson(a,b,n):.4f}")
+                    print(" === Point Milieu ===")
+                    point_milieu(f, 0, 1, 0.1, 10, y_exact=y_exact)
                 elif suboption == 2:
-                    print(f"* Simpson Rec: ∫f(x) dx = {simpson_recursive(a,b,n):.4f}")
-                elif suboption == 3 :
-                        I_ex = float(input("Entrer I exacte:"))
-                        print(f"** |I - ∫f(x) dx| = ",erreur_absolue_simpson(I_ex,a,b,n))
-                elif suboption == 4:
-                        print("*** Borne D'erreur = ",borne_erreur_simpson(a,b,n))
+                    print(" === Point Milieu Rec ===")
+                    point_milieu_rec(f, 0, 1, 0.1, 10, y_exact=y_exact)
                 else : break
-            
+
+        elif option == 5:
+            while True :
+                submenu()
+                suboption = int(input("Choisissez une option: "))
+                if suboption == 1:
+                    print(" === RK4 ===")
+                    RK4(f, 0, 1, 0.1, 10, y_exact=y_exact) 
+                elif suboption == 2:
+                    print(" === RK4 Recursive ===")
+                    RK4_rec(f, 0, 1, 0.1, 10, y_exact=y_exact)
+                else : break
         else:
             print("+=================+")
             print("| Session Terminé |")

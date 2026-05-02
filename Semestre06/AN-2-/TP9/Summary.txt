@@ -1,0 +1,212 @@
+# TP N°09 – Équations Différentielles : Résumé & Guide
+
+## 🎯 Objectif du TP
+
+Implémenter en **Python** 5 méthodes numériques pour résoudre un problème de Cauchy (équation différentielle du 1er ordre avec condition initiale) :
+
+```
+dy/dx = f(x, y),   y(x0) = y0
+```
+
+---
+
+## 📐 Les 5 Méthodes à Coder
+
+### 1. Méthode d'Euler (la plus simple)
+
+**Formule :**
+```
+y_{k+1} = y_k + h * f(x_k, y_k)
+```
+
+**Code Python :**
+```python
+def euler(f, x0, y0, h, n):
+    x, y = x0, y0
+    for k in range(n):
+        y = y + h * f(x, y)
+        x = x + h
+        print(f"x = {x:.4f}, y = {y:.6f}")
+    return y
+```
+
+---
+
+### 2. Méthode de Taylor (ordre 2)
+
+**Formule :**
+```
+y_{k+1} = y_k + h*f + (h²/2) * (∂f/∂x + ∂f/∂y * f)
+```
+
+Nécessite de calculer les dérivées partielles de f à la main.
+
+**Code Python :**
+```python
+def taylor(f, dfdx, dfdy, x0, y0, h, n):
+    x, y = x0, y0
+    for k in range(n):
+        f_val = f(x, y)
+        y = y + h * f_val + (h**2 / 2) * (dfdx(x, y) + dfdy(x, y) * f_val)
+        x = x + h
+        print(f"x = {x:.4f}, y = {y:.6f}")
+    return y
+```
+
+---
+
+### 3. Méthode d'Euler Modifiée (RK2 - variante trapèze)
+
+**Formule :**
+```
+k1 = f(x_k, y_k)
+k2 = f(x_{k+1}, y_k + h*k1)
+y_{k+1} = y_k + (h/2) * (k1 + k2)
+```
+
+**Code Python :**
+```python
+def euler_modifiee(f, x0, y0, h, n):
+    x, y = x0, y0
+    for k in range(n):
+        k1 = f(x, y)
+        k2 = f(x + h, y + h * k1)
+        y = y + (h / 2) * (k1 + k2)
+        x = x + h
+        print(f"x = {x:.4f}, y = {y:.6f}")
+    return y
+```
+
+---
+
+### 4. Méthode du Point Milieu (RK2 - variante milieu)
+
+**Formule :**
+```
+k1 = h * f(x_k, y_k)
+k2 = h * f(x_k + h/2, y_k + k1/2)
+y_{k+1} = y_k + k2
+```
+
+**Code Python :**
+```python
+def point_milieu(f, x0, y0, h, n):
+    x, y = x0, y0
+    for k in range(n):
+        k1 = h * f(x, y)
+        k2 = h * f(x + h/2, y + k1/2)
+        y = y + k2
+        x = x + h
+        print(f"x = {x:.4f}, y = {y:.6f}")
+    return y
+```
+
+---
+
+### 5. Méthode de Runge-Kutta d'ordre 4 (la plus précise)
+
+**Formule :**
+```
+k1 = h * f(x_k, y_k)
+k2 = h * f(x_k + h/2, y_k + k1/2)
+k3 = h * f(x_k + h/2, y_k + k2/2)
+k4 = h * f(x_k + h, y_k + k3)
+y_{k+1} = y_k + (1/6) * (k1 + 2*k2 + 2*k3 + k4)
+```
+
+**Code Python :**
+```python
+def runge_kutta4(f, x0, y0, h, n):
+    x, y = x0, y0
+    for k in range(n):
+        k1 = h * f(x, y)
+        k2 = h * f(x + h/2, y + k1/2)
+        k3 = h * f(x + h/2, y + k2/2)
+        k4 = h * f(x + h, y + k3)
+        y = y + (1/6) * (k1 + 2*k2 + 2*k3 + k4)
+        x = x + h
+        print(f"x = {x:.4f}, y = {y:.6f}")
+    return y
+```
+
+---
+
+## 📋 Travail Demandé (3 parties)
+
+### Partie 1 – Programme principal avec menu
+Créer un menu interactif qui demande à l'utilisateur :
+- L'équation f(x, y)
+- Les conditions initiales x0, y0
+- Le pas h et le nombre d'itérations n
+- La méthode à utiliser (1 à 5)
+
+### Partie 2 – Version récursive de chaque algorithme
+Réécrire chaque méthode en utilisant la **récursivité** (appel de la fonction sur elle-même) au lieu de la boucle `for`.
+
+Exemple pour Euler récursif :
+```python
+def euler_recursif(f, x, y, h, n, k=0):
+    if k == n:
+        return y
+    y = y + h * f(x, y)
+    x = x + h
+    print(f"x = {x:.4f}, y = {y:.6f}")
+    return euler_recursif(f, x, y, h, n, k+1)
+```
+
+### Partie 3 – Tester les exemples du cours et du TD
+
+**Exemple du cours** (à tester avec toutes les méthodes) :
+```
+dy/dx = -y + x + 1,   y(0) = 1,   chercher y(1) avec h = 0.1
+Solution exacte : y(x) = e^(-x) + x  →  y(1) ≈ 1.367879
+```
+
+**Exemples du TD N°8 :**
+
+- **Exercice 1 :** `dy/dx + y/x = e^x`, `y(1) = 1` → trouver y(1.4) avec Euler, h=0.1
+
+- **Exercice 2 :** `dy/dx = x - (sin y)²`, `y(0) = π/4` → trouver y(3π/4) avec Euler, h=π/4
+
+- **Exercice 3 :** `dy/dx = 3y`, `y(0) = 2` → Runge-Kutta ordre 2 sur [0,1], h=0.1
+
+---
+
+## 💡 Conseils Pratiques
+
+1. **Définir f comme une fonction Python** avant d'appeler les méthodes :
+   ```python
+   def f(x, y):
+       return -y + x + 1
+   ```
+
+2. **Pour Taylor**, il faut calculer les dérivées partielles à la main :
+   - Pour `f(x,y) = -y + x + 1` : `∂f/∂x = 1`, `∂f/∂y = -1`
+
+3. **Comparer les résultats** avec la solution exacte pour évaluer la précision de chaque méthode.
+
+4. **Structure du menu suggérée :**
+   ```
+   === Résolution d'équation différentielle ===
+   1. Méthode d'Euler
+   2. Méthode de Taylor
+   3. Méthode d'Euler Modifiée
+   4. Méthode du Point Milieu
+   5. Méthode de Runge-Kutta d'ordre 4
+   0. Quitter
+   Votre choix :
+   ```
+
+---
+
+## 📊 Comparaison de Précision (pour le même exemple)
+
+| Méthode        | Erreur typique (h=0.1) |
+|----------------|------------------------|
+| Euler          | ~0.019 (ordre 1)       |
+| Taylor ord. 2  | ~0.0007 (ordre 2)      |
+| Euler modifiée | ~0.0002 (ordre 2)      |
+| Point milieu   | ~0.0002 (ordre 2)      |
+| Runge-Kutta 4  | ~3×10⁻⁷ (ordre 4)     |
+
+**Conclusion :** RK4 est la plus précise mais aussi la plus coûteuse en calculs.
