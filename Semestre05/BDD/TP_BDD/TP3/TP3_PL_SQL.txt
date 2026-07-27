@@ -1,0 +1,294 @@
+1-
+DECLARE
+VNbposte Number;
+BEGIN
+SELECT nbposte into VNbposte FROM salle
+WHERE typesalle='Informatique';
+DBMS_OUTPUT.PUT_LINE('Nombre total de postes (type = informatique) : ' || vnbposte);
+END;
+/
+
+2-
+DECLARE
+    VNumlog   logiciel.NumLog%TYPE;
+    VNomlog   logiciel.NomLog%TYPE;
+    VNbposte  NUMBER;
+BEGIN
+    SELECT l.NumLog, l.NomLog, COUNT(i.NumPoste)
+    INTO VNumlog, VNomlog, VNbposte
+    FROM Logiciel l
+    LEFT JOIN Installer i ON l.NumLog = i.NumLog
+    WHERE l.NumLog = 'L2'
+    GROUP BY l.NumLog, l.NomLog;
+    DBMS_OUTPUT.PUT_LINE('Le logiciel qui a le numéro ' || VNumlog ||' se nomme ' || VNomlog ||', il est installé sur ' || VNbposte || ' postes.');
+END;
+/
+
+
+3-
+ACCEPT p_numlog PROMPT 'Donner le numéro du logiciel : '
+DECLARE
+    VNumlog   Logiciel.NumLog%TYPE;
+    VNomlog   Logiciel.NomLog%TYPE;
+    VNbposte  NUMBER;
+BEGIN
+    SELECT l.NumLog, l.NomLog, COUNT(i.NumPoste)
+    INTO VNumlog, VNomlog, VNbposte
+    FROM Logiciel l
+    LEFT JOIN Installer i ON l.NumLog = i.NumLog
+    WHERE l.NumLog = '&p_numlog'
+    GROUP BY l.NumLog, l.NomLog;
+
+    DBMS_OUTPUT.PUT_LINE(
+        'Le logiciel ' || VNumlog || ' se nomme ' || VNomlog ||', il est installé sur ' || VNbposte || ' postes.');
+
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        DBMS_OUTPUT.PUT_LINE('Aucun logiciel trouvé avec ce numéro.');
+END;
+/
+
+4-VARIABLE g_compteur NUMBER;
+BEGIN
+    :g_compteur := :g_compteur + 1;
+    DBMS_OUTPUT.PUT_LINE('Le numero de fois éxecution ' || :g_compteur|| ' fois ');
+END;
+/
+
+5-
+DECLARE
+    CURSOR c1 IS 
+        SELECT p.NumPoste, COUNT(i.NumPoste) AS NbLogiciels
+        FROM Poste p 
+        LEFT JOIN Installer i ON p.NumPoste = i.NumPoste
+        GROUP BY p.NumPoste;
+    v_type VARCHAR2(20);
+BEGIN
+    FOR r IN c1 LOOP
+        IF r.NbLogiciels <= 2 THEN
+            v_type := 'Peu équipé';
+        ELSIF r.NbLogiciels <= 5 THEN
+            v_type := 'Normal';
+        ELSE
+            v_type := 'Très équipé';
+        END IF;
+        DBMS_OUTPUT.PUT_LINE(' (Numéro de poste ' || r.NumPoste || ')' ||' — Nb logiciels : ' || r.NbLogiciels ||' — Type : ' || v_type);
+    END LOOP;
+END;
+/
+6-SET SERVEROUTPUT ON;
+DECLARE
+    CURSOR c1 IS
+        SELECT a.nomagent AS nomAgent,
+               COUNT(s.responsable) OVER (PARTITION BY a.numagent) AS nbSalles,
+               s.nomsalle,
+               s.typesalle
+        FROM Agent a
+        JOIN Salle s ON a.numagent = s.responsable
+        ORDER BY a.nomagent, s.nomsalle, s.typesalle;
+    v_counter NUMBER := 0; 
+BEGIN
+    FOR rec IN c1 LOOP
+        v_counter := v_counter + 1;
+
+        DBMS_OUTPUT.PUT_LINE(
+          'Agent=' || rec.nomAgent ||
+          ', Salle=' || rec.nomsalle ||
+          ', Type=' || rec.typesalle ||
+          ', NbSalles=' || rec.nbSalles
+        );
+
+        IF v_counter = 3 THEN
+            EXIT;
+        END IF;
+
+    END LOOP;
+END;
+/
+
+7- SET SERVEROUTPUT ON;
+
+DECLARE
+    -- Curseur 1 : Parcourir tous les agents
+    CURSOR cur_agents IS
+        SELECT NumAgent, NomAgent, Prenom
+        FROM Agent;
+
+    -- Curseur 2 : Récupérer les salles d’un agent donné
+    CURSOR cur_salles (p_numAgent Agent.NumAgent%TYPE) IS
+        SELECT NomSalle, TypeSalle
+        FROM Salle
+        WHERE Responsable = p_numAgent;
+
+    -- Variables
+    v_numAgent Agent.NumAgent%TYPE;
+    v_nomAgent Agent.NomAgent%TYPE;
+    v_prenomAgent Agent.Prenom%TYPE;
+    v_nomSalle Salle.NomSalle%TYPE;
+    v_typeSalle Salle.TypeSalle%TYPE;
+
+    v_nb INTEGER;
+BEGIN
+    -- Ouvrir le curseur des agents
+    OPEN cur_agents;
+
+    LOOP
+        FETCH cur_agents INTO v_numAgent, v_nomAgent, v_prenomAgent;
+        EXIT WHEN cur_agents%NOTFOUND;
+
+        -- Compter les salles de cet agent
+        SELECT COUNT(*) INTO v_nb
+        FROM Salle
+        WHERE Responsable = v_numAgent;
+
+        DBMS_OUTPUT.PUT_LINE(
+            'Agent : ' || v_nomAgent || ' ' || v_prenomAgent || ' - Nb salles : ' || v_nb
+        );
+
+        DBMS_OUTPUT.PUT_LINE('RESPONSABLE DES salles suivantes :');
+
+        -- Curseur 2 : salles de l’agent
+        OPEN cur_salles(v_numAgent);
+
+        LOOP
+            FETCH cur_salles INTO v_nomSalle, v_typeSalle;
+            EXIT WHEN cur_salles%NOTFOUND;
+
+            DBMS_OUTPUT.PUT_LINE('- nom Salle ' || v_nomSalle || ' de type ' || v_typeSalle);
+        END LOOP;
+
+        CLOSE cur_salles;
+
+        DBMS_OUTPUT.PUT_LINE('----------------------');
+    END LOOP;
+
+    CLOSE cur_agents;
+END;
+/
+
+7- SET SERVEROUTPUT ON;
+
+DECLARE
+    CURSOR cur_agents IS
+        SELECT a.NumAgent, a.NomAgent, a.Prenom, COUNT(s.NomSalle) AS NbSalles
+        FROM Agent a
+        JOIN Salle s ON s.Responsable = a.NumAgent
+        GROUP BY a.NumAgent, a.NomAgent, a.Prenom;
+    CURSOR cur_salles IS
+        SELECT NomSalle, TypeSalle, Responsable
+        FROM Salle;
+BEGIN
+    FOR v_Agent IN cur_agents LOOP
+        DBMS_OUTPUT.PUT_LINE(
+            'Agent : ' || v_Agent.NomAgent || ' ' || v_Agent.Prenom ||
+            ' - Nb salles : ' || v_Agent.NbSalles
+        );
+        DBMS_OUTPUT.PUT_LINE('RESPONSABLE DES salles suivantes :');
+        -- Boucle des salles (filtrage manuel)
+        FOR v_Salle IN cur_salles LOOP
+            IF v_Salle.Responsable = v_Agent.NumAgent THEN
+                DBMS_OUTPUT.PUT_LINE(
+                    '- nom Salle ' || v_Salle.NomSalle || 
+                    ' de type ' || v_Salle.TypeSalle
+                );
+            END IF;
+        END LOOP;
+        DBMS_OUTPUT.PUT_LINE('----------------------');
+    END LOOP;
+END;
+/
+
+8--- Demander les valeurs à l'utilisateur
+ACCEPT VNumPoste PROMPT 'Entrer le NumPoste: '
+ACCEPT VNumLog PROMPT 'Entrer le NumLog: '
+ACCEPT VDateInstall PROMPT 'Entrer la nouvelle date (DD/MM/YYYY): '
+
+DECLARE
+    v_numPoste Poste.NumPoste%TYPE := &VNumPoste;
+    v_numLog   Logiciel.NumLog%TYPE := &VNumLog;
+    v_newDate  DATE := TO_DATE('&VDateInstall','DD/MM/YYYY');
+
+    -- Exception personnalisée
+    NOT_INSTALLED EXCEPTION;
+
+    -- Variable pour vérifier l'existence
+    v_count NUMBER;
+BEGIN
+    -- Vérifier si le poste existe
+    SELECT COUNT(*)
+    INTO v_count
+    FROM Poste
+    WHERE NumPoste = v_numPoste;
+
+    IF v_count = 0 THEN
+        RAISE NO_DATA_FOUND;
+    END IF;
+
+    -- Vérifier si le logiciel est installé sur le poste
+    SELECT COUNT(*)
+    INTO v_count
+    FROM Installer
+    WHERE NumPoste = v_numPoste AND NumLog = v_numLog;
+
+    IF v_count = 0 THEN
+        RAISE NOT_INSTALLED;
+    END IF;
+
+    -- Mise à jour de la date d'installation
+    UPDATE Installer
+    SET DateInstall = v_newDate
+    WHERE NumPoste = v_numPoste AND NumLog = v_numLog;
+
+    COMMIT;
+
+    DBMS_OUTPUT.PUT_LINE('Date d''installation mise à jour avec succès !');
+
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        DBMS_OUTPUT.PUT_LINE('Erreur : le poste n''existe pas.');
+    WHEN NOT_INSTALLED THEN
+        DBMS_OUTPUT.PUT_LINE('Erreur : le logiciel n''est pas installé sur ce poste.');
+    WHEN OTHERS THEN
+        DBMS_OUTPUT.PUT_LINE('Erreur inattendue : ' || SQLERRM);
+END;
+/
+
+
+
+ACCEPT VNumPoste PROMPT 'Entrer le NumPoste: '
+ACCEPT VNumLog PROMPT 'Entrer le NumLog: '
+ACCEPT VDateInstall PROMPT 'Entrer la nouvelle date (DD/MM/YYYY): '
+
+DECLARE
+    v_numPoste Poste.NumPoste%TYPE := &VNumPoste;
+    v_numLog   Logiciel.NumLog%TYPE := &VNumLog;
+    v_newDate  DATE := TO_DATE('&VDateInstall','DD/MM/YYYY');
+    NOT_INSTALLED EXCEPTION;
+    v_count NUMBER;
+    
+BEGIN
+    SELECT COUNT(*)
+    INTO v_count
+    FROM Poste
+    WHERE NumPoste = v_numPoste;
+    IF v_count = 0 THEN
+        RAISE NO_DATA_FOUND;
+    END IF;
+    SELECT COUNT(*) INTO v_count FROM Installer
+    WHERE NumPoste = v_numPoste AND NumLog = v_numLog;
+    IF v_count = 0 THEN
+        RAISE NOT_INSTALLED;
+    END IF;
+    UPDATE Installer
+    SET DateInstall = v_newDate
+    WHERE NumPoste = v_numPoste AND NumLog = v_numLog;
+    
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        DBMS_OUTPUT.PUT_LINE('Le poste n''existe pas.');
+    WHEN NOT_INSTALLED THEN
+        DBMS_OUTPUT.PUT_LINE('Le logiciel n est pas installé sur ce poste.');
+END;
+/
+
+

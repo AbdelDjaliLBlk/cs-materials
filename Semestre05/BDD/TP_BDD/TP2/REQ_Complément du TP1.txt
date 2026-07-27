@@ -1,0 +1,31 @@
+-- 1. Afficher l'état actuel des groupes et de leurs membres
+SELECT GROUP#, MEMBER, TYPE FROM V$LOGFILE;
+
+-- 2. Ajouter un nouveau membre au groupe 1
+ALTER DATABASE ADD LOGFILE MEMBER 
+'C:\app\oracle\oradata\RessHumaines\redo01b.log' TO GROUP 1;
+
+-- 3. Ajouter un nouveau groupe avec deux membres (50 Mo chacun)
+ALTER DATABASE ADD LOGFILE GROUP 4 (
+  'C:\app\oracle\oradata\RessHumaines\redo04a.log',
+  'C:\app\oracle\oradata\RessHumaines\redo04b.log'
+) SIZE 50M REUSE;
+
+-- 4. Vérifier que le groupe a bien été ajouté
+SELECT GROUP#, STATUS, MEMBERS FROM V$LOG;
+
+-- 5_1. Forcer un switch de journal pour passer au groupe suivant
+-- (obligatoire avant de supprimer un membre)
+ALTER SYSTEM SWITCH LOGFILE;
+
+-- 5_2. Supprimer le membre 2 du groupe 1
+ALTER DATABASE DROP LOGFILE MEMBER 
+'C:\app\oracle\oradata\RessHumaines\redo01b.log';
+🧠 Explication :
+
+ALTER SYSTEM SWITCH LOGFILE;
+➜ Force Oracle à écrire dans le groupe suivant.
+
+Après cela, le groupe précédent devient INACTIVE, donc Oracle autorise la suppression d’un de ses membres.
+
+Ensuite seulement, la commande ALTER DATABASE DROP LOGFILE MEMBER ... fonctionne sans erreur.

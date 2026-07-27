@@ -1,0 +1,33 @@
+CREATE TABLE Agent (
+  NumAgent NUMBER PRIMARY KEY,
+  NomAgent VARCHAR2(50),
+  Prenom VARCHAR2(50)
+);
+
+CREATE TABLE Salle (
+  NumSalle NUMBER PRIMARY KEY,
+  NomSalle VARCHAR2(50),
+  TypeSalle VARCHAR2(50),
+  NbPoste NUMBER,
+  Responsable NUMBER REFERENCES Agent(NumAgent)
+);
+
+CREATE TABLE Poste (
+  NumPoste NUMBER PRIMARY KEY,
+  NomPoste VARCHAR2(50),
+  NSalle NUMBER REFERENCES Salle(NumSalle)
+);
+
+CREATE TABLE Logiciel (
+  NumLog VARCHAR2(10) PRIMARY KEY,
+  NomLog VARCHAR2(50),
+  Prix NUMBER,
+  DateAchat DATE
+);
+
+CREATE TABLE Installer (
+  NumPoste NUMBER REFERENCES Poste(NumPoste),
+  NumLog VARCHAR2(10) REFERENCES Logiciel(NumLog),
+  DateInstall DATE,
+  PRIMARY KEY (NumPoste, NumLog)
+);

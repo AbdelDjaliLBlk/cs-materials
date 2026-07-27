@@ -1,0 +1,127 @@
+/*
+------------------------------------------
+//Q1:
+CREATE TRIGGER Maj_Nom_Log 
+BEFORE INSERT OR UPDATE ON LOGICIEL
+FOR EACH ROW
+BEGIN
+ :NEW.NomLog := UPPER(:NEW.NomLog);
+END;
+/
+//Test:
+INSERT INTO LOGICIEL VALUES('L8','sqldeveloper',600,SYSDATE)
+UPDATE LOGICIEL l SET l.nomLog = 'python' WHERE l.numlog = 'L2'; 
+*/
+------------------------------------------
+//Q2:
+/*
+CREATE TRIGGER Date_Install_Check 
+BEFORE INSERT OR UPDATE ON INSTALLER
+FOR EACH ROW
+BEGIN
+IF :NEW.DateInstall IS NULL THEN 
+ :NEW.DateInstall := SYSDATE;
+END IF;
+END;
+/
+//Test : 
+INSERT INTO POSTE VALUES('P6','PostePoo','S2');
+INSERT INTO INSTALLER VALUES('P6','L6',NULL);
+SELECT * FROM poste;
+SELECT * FROM INSTALLER;
+------------------------------------------
+*/
+
+//Q3:
+/*
+CREATE OR REPLACE TRIGGER nbPoste_auto
+AFTER INSERT OR UPDATE OR DELETE  ON POSTE
+BEGIN
+UPDATE SALLE s 
+SET nbPoste = (
+SELECT COUNT(*) FROM POSTE p
+    WHERE s.numsalle = p.numsalle
+);
+END;
+/
+
+//Test:
+UPDATE POSTE SET NUMSALLE = 'S3' WHERE NUMPOSTE = 'P6';
+SELECT * from salle;
+*/
+//Q4
+
+//-----------------------------------------------------------
+/*
+CREATE OR REPLACE TRIGGER limit_ins_log 
+BEFORE UPDATE OR INSERT ON INSTALLER 
+FOR EACH ROW 
+DECLARE 
+v_nLog NUMBER;
+BEGIN
+SELECT COUNT(*) 
+INTO v_nlog 
+FROM INSTALLER
+WHERE numposte = :NEW.numposte;
+
+IF v_nlog > 3 THEN
+ RAISE_APPLICATION_ERROR(-20005,'Maximum 3 Logiciels par poste!');
+END IF;
+
+END;
+/
+*/
+//test
+//insert into installer values('P1','L1',SYSDATE);
+//-----------------------------------------------------------
+
+
+//Q5
+//-----------------------------------------------------------
+/*
+CREATE OR REPLACE TRIGGER install_actif_check
+BEFORE INSERT ON INSTALLER 
+FOR EACH ROW
+DECLARE 
+v_etat Poste.etat%type;
+BEGIN
+SELECT etat 
+INTO v_etat
+FROM poste 
+WHERE numposte = :NEW.numposte;
+
+IF v_etat = 0 THEN
+ RAISE_APPLICATION_ERROR(-20031,'Poste Inactif!');
+END IF;
+END;
+/
+*/
+
+insert into installer values('P1','L2',SYSDATE); 
+select * from installer order by numposte;
+select * from poste order by numposte;
+//-----------------------------------------------------------
+
+//Q7
+//------------------------------------------
+/*
+CREATE OR REPLACE TRIGGER limit_daily_install
+BEFORE INSERT ON INSTALLER
+FOR EACH ROW
+DECLARE 
+v_count NUMBER;
+BEGIN
+SELECT COUNT(*)
+INTO v_count
+FROM INSTALLER
+WHERE dateinstall = :NEW.dateinstall 
+and TRUNC(dateinstall) = TRUNC(:NEW.dateinstall);
+
+IF v_count >= 3 THEN
+    RAISE_APPLICATION_ERROR(-20012,'MAximum 3 Logiciels Par Jour');
+END IF;
+
+END;
+/
+*/
+

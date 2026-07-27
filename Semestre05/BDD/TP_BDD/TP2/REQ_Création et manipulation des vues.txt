@@ -1,0 +1,33 @@
+-- 1. Créer la vue des logiciels récents (achetés après 2023)
+CREATE OR REPLACE VIEW VLogicielsRecents AS
+SELECT * FROM Logiciel
+WHERE DateAchat > TO_DATE('2023-01-01', 'YYYY-MM-DD');
+
+-- 2. Créer la table TLogicielsRecents (mêmes données)
+CREATE TABLE TLogicielsRecents AS
+SELECT * FROM Logiciel
+WHERE DateAchat > TO_DATE('2023-01-01', 'YYYY-MM-DD');
+
+-- 3. Afficher le contenu de la vue et de la table
+SELECT * FROM VLogicielsRecents;
+SELECT * FROM TLogicielsRecents;
+
+-- 4. Ajouter deux logiciels dans la table Logiciel
+INSERT INTO Logiciel VALUES ('L33', 'Avast', 3000, TO_DATE('2020-03-15', 'YYYY-MM-DD'));
+INSERT INTO Logiciel VALUES ('L34', 'Kaspersky', 2500, TO_DATE('2024-03-15', 'YYYY-MM-DD'));
+
+-- 5. Afficher à nouveau le contenu de la vue et de la table
+SELECT * FROM VLogicielsRecents;
+SELECT * FROM TLogicielsRecents;
+
+-- 6. Insérer dans la vue (cas d’incohérence)
+INSERT INTO VLogicielsRecents VALUES ('L35', 'AVG', 3500, TO_DATE('2022-03-15', 'YYYY-MM-DD'));
+
+-- 6 bis. Empêcher cette incohérence avec WITH CHECK OPTION
+CREATE OR REPLACE VIEW VLogicielsRecents AS
+SELECT * FROM Logiciel
+WHERE DateAchat > TO_DATE('2023-01-01', 'YYYY-MM-DD')
+WITH CHECK OPTION CONSTRAINT verif_dateachat;
+---7
+CREATE OR REPLACE VIEW VInstallationDetail (NomPoste,NomLog,Responsable) AS SELECT p.NomPoste, l.NomLog, a.NomAgent  FROM Poste p JOIN Salle s ON p.numsalle = s.num JOIN Agent a ON s.responsable
+=a.NumAgent JOIN installer i ON p.numposte = i.numposte JOIN logiciel l ON i.numlog = l.numlog;
